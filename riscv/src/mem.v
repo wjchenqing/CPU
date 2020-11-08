@@ -7,7 +7,7 @@ module mem(
     input   wire[`RegBus]       rd_val_in,
     input   wire[`RegAddrBus]   rd_addr_in,
     input   wire[`InstTypeBus]  inst_type_in,
-    input   wire[`InstAddrBus]  pc_in,
+    input   wire[`InstAddrBus]  pc_in,          // todo: ????
 
     output  reg                 rd_out,
     output  reg[`RegBus]        rd_val_out,

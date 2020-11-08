@@ -10,8 +10,8 @@ module id(
     input   wire[`RegBus]       rs2_data_in,
 
     //write to regfile.
-    output  reg                 rs1_read_out,
-    output  reg                 rs2_read_out,
+    output  reg                 rs1_read_out,   //whether to read or not
+    output  reg                 rs2_read_out,   //whether to read or not
     output  reg[`RegAddrBus]    rs1_addr_out,
     output  reg[`RegAddrBus]    rs2_addr_out,
 

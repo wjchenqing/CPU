@@ -13,6 +13,7 @@
 `define False_v         1'b0
 `define ChipEnable      1'b1
 `define ChipDisable     1'b0
+`define PCstep          32'h4
 
 //-----------Regfile Related-----------
 `define RegAddrBus      4:0

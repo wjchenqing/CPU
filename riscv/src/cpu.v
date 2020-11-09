@@ -74,6 +74,12 @@ module cpu(
         .rst_in(rst_in),
         .pc_in(pc_ifid_to_id),
         .inst_in(inst_ifid_to_id),
+        .ex_wreg_in(rd_ex_to_exmem),
+        .ex_wdata_in(rd_val_ex_to_exmem),
+        .ex_waddr_in(rd_addr_ex_to_exmem),
+        .mem_wreg_in(rd_mem_to_memwb),
+        .mem_wdata_in(rd_val_mem_to_memwb),
+        .mem_waddr_in(rd_addr_mem_to_memwb),
         .rs1_data_in(rs1_data_regfile_to_id),
         .rs2_data_in(rs2_data_regfile_to_id),
         .rs1_read_out(rs1_read_id_to_regfile),
@@ -85,7 +91,7 @@ module cpu(
         .rd_out(rd_id_to_idex),
         .rd_addr_out(rd_addr_id_to_idex),
         .inst_type_out(inst_type_id_to_idex),
-        .imm_out(imm_id_to_idex),
+        .imm(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
     );
 
@@ -117,7 +123,7 @@ module cpu(
         .pc_ex_out(pc_idex_to_ex)
     );
 
-    // Link ex to ex_mem
+    // Link ex to ex_mem, forwarding to id
     wire                    rd_ex_to_exmem;
     wire [`RegBus ]         rd_val_ex_to_exmem;
     wire [`RegAddrBus ]     rd_addr_ex_to_exmem;
@@ -142,7 +148,7 @@ module cpu(
         .pc_out(pc_ex_to_pcreg)
     );
 
-    // Link ex_mem to mem
+    // Link ex_mem to mem, forwarding to id
     wire                    rd_exmem_to_mem;
     wire [`RegBus ]         rd_val_exmem_to_mem;
     wire [`RegAddrBus ]     rd_addr_exmem_to_mem;
@@ -178,6 +184,38 @@ module cpu(
         .rd_addr_out(rd_addr_mem_to_memwb)
     );
 
+    // Link mem_wb to regfile
+    wire                    rd_wb_to_regfile;
+    wire [`RegBus ]         rd_val_wb_to_regfile;
+    wire [`RegAddrBus ]     rd_addr_wb_to_regfile;
+
+    mem_wb MEM_WB(
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .rdy_in(rdy_in),
+        .rd_mem_in(rd_mem_to_memwb),
+        .rd_val_mem_in(rd_val_mem_to_memwb),
+        .rd_addr_mem_in(rd_addr_mem_to_memwb),
+        .rd_wb_out(rd_wb_to_regfile),
+        .rd_val_wb_out(rd_val_wb_to_regfile),
+        .rd_addr_wb_out(rd_addr_wb_to_regfile)
+    );
+
+    regfile REGFILE(
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .we(rd_wb_to_regfile),
+        .wdata(rd_val_wb_to_regfile),
+        .waddr(rd_addr_wb_to_regfile),
+        .re1(rs1_read_id_to_regfile),
+        .raddr1(rs1_addr_id_to_regfile),
+        .rdata1(rs1_data_regfile_to_id),
+        .re2(rs2_read_id_to_regfile),
+        .raddr2(rs2_addr_id_to_regfile),
+        .rdata2(rs2_data_regfile_to_id)
+    );
+
+/*
 always @(posedge clk_in)
   begin
     if (rst_in)
@@ -193,5 +231,5 @@ always @(posedge clk_in)
       
       end
   end
-
+*/
 endmodule : cpu

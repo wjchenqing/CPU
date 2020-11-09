@@ -5,6 +5,16 @@ module id(
     input   wire[`InstAddrBus]  pc_in,
     input   wire[`InstBus]      inst_in,
 
+    //forwarding from ex.
+    input   wire                ex_wreg_in,     //1'b1 stands for having rd.
+    input   wire[`RegBus]       ex_wdata_in,
+    input   wire[`RegAddrBus]   ex_waddr_in,
+
+    //forwarding from mem.
+    input   wire                mem_wreg_in,
+    input   wire[`RegBus]       mem_wdata_in,
+    input   wire[`RegAddrBus]   mem_waddr_in,
+
     //read from regfile.
     input   wire[`RegBus]       rs1_data_in,
     input   wire[`RegBus]       rs2_data_in,
@@ -21,7 +31,6 @@ module id(
     output  reg                 rd_out,
     output  reg[`RegAddrBus]    rd_addr_out,
     output  reg[`InstTypeBus]   inst_type_out,
-    output  reg[`RegBus]        imm_out,
     output  reg[`InstAddrBus]   pc_out
 );
 
@@ -38,11 +47,9 @@ module id(
             rs2_read_out <= `ReadDisable;
             rs1_addr_out <= `NOPRegAdder;
             rs2_addr_out <= `NOPRegAdder;
-            rs1_val_out <= `ZeroWord;
-            rs2_val_out <= `ZeroWord;
             rd_addr_out <= `NOPRegAdder;
             inst_type_out <= `NOPInstType;
-            imm_out <= `ZeroWord;
+            imm <= `ZeroWord;
             pc_out <= `ZeroWord;
         end else begin
             case (opcode)
@@ -51,8 +58,6 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
@@ -60,39 +65,39 @@ module id(
                     case (func3)
                         `f3ADDI: begin
                             inst_type_out <= `ADDI;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3SLTI: begin
                             inst_type_out <= `SLTI;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3SLTIU: begin
                             inst_type_out <= `SLTIU;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3XORI: begin
                             inst_type_out <= `XORI;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3ORI: begin
                             inst_type_out <= `ORI;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3ANDI: begin
                             inst_type_out <= `ANDI;
-                            imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                            imm <= {{20{inst_in[31]}},inst_in[31:20]};
                         end
                         `f3SLLI: begin
                             inst_type_out <= `SLLI;
-                            imm_out <= {{27'b0},inst_in[24:20]};
+                            imm <= {{27'b0},inst_in[24:20]};
                         end
                         `f3SRLI_SRAI: begin
                             if (func7 == `f7SRLI) begin
                                 inst_type_out <= `SRLI;
-                                imm_out <= {{27'b0},inst_in[24:20]};
+                                imm <= {{27'b0},inst_in[24:20]};
                             end else begin
                                 inst_type_out <= `SRAI;
-                                imm_out <= {{27'b0},inst_in[24:20]};
+                                imm <= {{27'b0},inst_in[24:20]};
                             end
                         end
                     endcase
@@ -102,12 +107,10 @@ module id(
                     rs2_read_out <= `ReadEnable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= inst_in[`rs2Range];
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= `ZeroWord;
+                    imm <= `ZeroWord;
 
                     case (func3)
                         `f3ADD_SUB: begin
@@ -149,12 +152,10 @@ module id(
                     rs2_read_out <= `ReadEnable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= inst_in[`rs2Range];
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteDisable;
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
-                    imm_out <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
+                    imm <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
 
                     case (func3)
                         `f3BEQ: begin
@@ -182,12 +183,10 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                    imm <= {{20{inst_in[31]}},inst_in[31:20]};
 
                     case (func3)
                         `f3LB: inst_type_out <= `LB;
@@ -202,12 +201,10 @@ module id(
                     rs2_read_out <= `ReadEnable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= inst_in[`rs2Range];
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteDisable;
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
-                    imm_out <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
+                    imm <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
 
                     case (func3)
                         `f3SB: inst_type_out <= `SB;
@@ -220,12 +217,10 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= `NOPRegAdder;
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= {inst_in[31:12],12'b0};
+                    imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `LUI;
                 end
                 `opAUIPC: begin
@@ -233,12 +228,10 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= `NOPRegAdder;
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= {inst_in[31:12],12'b0};
+                    imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `AUIPC;
                 end
                 `opJAL: begin
@@ -246,12 +239,10 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= `NOPRegAdder;
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
+                    imm <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
                     inst_type_out <= `JAL;
                 end
                 `opJALR: begin
@@ -259,15 +250,45 @@ module id(
                     rs2_read_out <= `ReadDisable;
                     rs1_addr_out <= inst_in[`rs1Range];
                     rs2_addr_out <= `NOPRegAdder;
-                    //todo rs1_out <=
-                    //todo rs2_out <=
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    imm_out <= {{20{inst_in[31]}},inst_in[31:20]};
+                    imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
                 end
             endcase
+        end
+    end
+
+    always @ (*) begin
+        if (rst_in == `RstEnable) begin
+            rs1_val_out <= `ZeroWord ;
+        end else if ((rs1_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
+            rs1_val_out <= ex_wdata_in;
+        end else if ((rs1_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs1_addr_out)) begin
+            rs1_val_out <= mem_wdata_in;
+        end else if (rs1_read_out == `ReadEnable ) begin
+            rs1_val_out <= rs1_data_in;
+        end else if (rs1_read_out == `ReadDisable ) begin
+            rs1_val_out <= imm;
+        end else begin
+            rs1_val_out <= `ZeroWord ;
+        end
+    end
+
+    always @ (*) begin
+        if (rst_in == `RstEnable) begin
+            rs2_val_out <= `ZeroWord ;
+        end else if ((rs2_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
+            rs2_val_out <= ex_wdata_in;
+        end else if ((rs2_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs2_addr_out)) begin
+            rs2_val_out <= mem_wdata_in;
+        end else if (rs2_read_out == `ReadEnable ) begin
+            rs2_val_out <= rs2_data_in;
+        end else if (rs2_read_out == `ReadDisable ) begin
+            rs2_val_out <= imm;
+        end else begin
+            rs2_val_out <= `ZeroWord ;
         end
     end
 

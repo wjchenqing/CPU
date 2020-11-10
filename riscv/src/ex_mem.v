@@ -4,6 +4,7 @@ module ex_mem(
     input   wire        clk_in,
     input   wire        rst_in,
     input   wire        rdy_in,
+    input   wire[5:0]   stall,
 
     input   wire                rd_ex_in,
     input   wire[`RegBus]       rd_val_ex_in,
@@ -22,7 +23,12 @@ module ex_mem(
             rd_val_mem_out <= `ZeroWord;
             rd_addr_mem_out <= `NOPRegAdder;
             inst_type_mem_out <= `NOPInstType;
-        end else begin
+        end else if (stall[3] == `Stop && stall[4] == `NotStop ) begin
+            rd_mem_out <= `WriteDisable ;
+            rd_val_mem_out <= `ZeroWord ;
+            rd_addr_mem_out <= `NOPRegAdder ;
+            inst_type_mem_out <= `NOPInstType ;
+        end else if (stall[3] == `NotStop ) begin
             rd_mem_out <= rd_ex_in;
             rd_val_mem_out <= rd_val_ex_in;
             rd_addr_mem_out <= rd_addr_ex_in;

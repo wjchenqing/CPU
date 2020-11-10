@@ -18,6 +18,8 @@ module ex(
 
 
     output  reg[`InstAddrBus]   pc_out,
+
+    output  wire                stallreq_from_ex
 );
 
     always @ (*) begin

@@ -31,7 +31,10 @@ module id(
     output  reg                 rd_out,
     output  reg[`RegAddrBus]    rd_addr_out,
     output  reg[`InstTypeBus]   inst_type_out,
-    output  reg[`InstAddrBus]   pc_out
+    output  reg[`InstAddrBus]   pc_out,
+
+    //stall ctrl
+    output  reg                 stalleq_from_id,
 );
 
     wire [6:0] opcode = inst_in[6 :0 ];

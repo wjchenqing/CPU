@@ -14,6 +14,8 @@
 `define ChipEnable      1'b1
 `define ChipDisable     1'b0
 `define PCstep          32'h4
+`define Stop            1'b1
+`define NotStop         1'b0
 
 //-----------Regfile Related-----------
 `define RegAddrBus      4:0

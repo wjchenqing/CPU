@@ -35,7 +35,8 @@ module cpu(
         .clk_in(clk_in),
         .rst_in(rst_in),
         .rdy_in(rdy_in),
-        .pc_out(pc)
+        .pc_out(pc),
+        .stall(stall_info),
     );
 
     // Link if_id to id.
@@ -48,7 +49,8 @@ module cpu(
         .if_pc(pc),
         .if_inst(mem_dout),
         .id_pc(pc_ifid_to_id),
-        .id_inst(inst_ifid_to_id)
+        .id_inst(inst_ifid_to_id),
+        .stall(stall_info),
     );
 
     // Link regfile to id.
@@ -93,6 +95,7 @@ module cpu(
         .inst_type_out(inst_type_id_to_idex),
         .imm(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
+        .stalleq_from_id(stallreq_from_id),
     );
 
     // Link id_ex to ex.
@@ -120,7 +123,8 @@ module cpu(
         .rd_addr_ex_out(rd_addr_idex_to_ex),
         .inst_type_ex_out(inst_type_idex_to_ex),
         .imm_ex_out(imm_idex_to_ex),
-        .pc_ex_out(pc_idex_to_ex)
+        .pc_ex_out(pc_idex_to_ex),
+        .stall(stall_info),
     );
 
     // Link ex to ex_mem, forwarding to id
@@ -145,7 +149,8 @@ module cpu(
         .rd_val_out(rd_val_ex_to_exmem),
         .rd_addr_out(rd_addr_ex_to_exmem),
         .inst_type_out(inst_type_ex_to_exmem),
-        .pc_out(pc_ex_to_pcreg)
+        .pc_out(pc_ex_to_pcreg),
+        .stallreq_from_ex(stallreq_from_ex),
     );
 
     // Link ex_mem to mem, forwarding to id
@@ -165,7 +170,8 @@ module cpu(
         .rd_mem_out(rd_exmem_to_mem),
         .rd_val_mem_out(rd_val_exmem_to_mem),
         .rd_addr_mem_out(rd_addr_exmem_to_mem),
-        .inst_type_mem_out(inst_type_exmem_to_mem)
+        .inst_type_mem_out(inst_type_exmem_to_mem),
+        .stall(stall_info),
     );
 
     // Link mem to mem_wb
@@ -198,7 +204,8 @@ module cpu(
         .rd_addr_mem_in(rd_addr_mem_to_memwb),
         .rd_wb_out(rd_wb_to_regfile),
         .rd_val_wb_out(rd_val_wb_to_regfile),
-        .rd_addr_wb_out(rd_addr_wb_to_regfile)
+        .rd_addr_wb_out(rd_addr_wb_to_regfile),
+        .stall(stall_info),
     );
 
     regfile REGFILE(
@@ -214,6 +221,19 @@ module cpu(
         .raddr2(rs2_addr_id_to_regfile),
         .rdata2(rs2_data_regfile_to_id)
     );
+
+    // Stall ctrl.
+    wire stallreq_from_id;
+    wire stallreq_from_ex;
+    wire stall_info;
+
+    ctrl CTRL(
+        .rst_in(rst_in),
+        .stallreq_from_id(stallreq_from_id),
+        .stallreq_from_ex(stallreq_from_ex),
+        .stall(stall_info),
+    );
+
 
 /*
 always @(posedge clk_in)

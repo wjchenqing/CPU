@@ -13,6 +13,7 @@ module id_ex(
     input   wire[`InstTypeBus]  inst_type_id_in,
     input   wire[`RegBus]       imm_id_in,
     input   wire[`InstAddrBus]  pc_id_in,
+    input   wire                id_loading,
 
     output  reg[`RegBus]        rs1_val_ex_out,
     output  reg[`RegBus]        rs2_val_ex_out,
@@ -20,7 +21,8 @@ module id_ex(
     output  reg[`RegAddrBus]    rd_addr_ex_out,
     output  reg[`InstTypeBus]   inst_type_ex_out,
     output  reg[`RegBus]        imm_ex_out,
-    output  reg[`InstAddrBus]   pc_ex_out
+    output  reg[`InstAddrBus]   pc_ex_out,
+    output  reg                 ex_loading,
 );
 
     always @ (posedge clk_in) begin

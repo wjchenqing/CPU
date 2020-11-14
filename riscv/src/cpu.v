@@ -77,11 +77,13 @@ module cpu(
     wire [`InstTypeBus] inst_type_id_to_idex;
     wire [`RegBus ]     imm_id_to_idex;
     wire [`InstAddrBus] pc_id_to_idex;
+    wire                loading_id_to_idex;
 
     id ID(
         .rst_in(rst_in),
         .pc_in(pc_ifid_to_id),
         .inst_in(inst_ifid_to_id),
+        .ex_is_loading(ex_is_loading_ex_to_id),
         .ex_wreg_in(rd_ex_to_exmem),
         .ex_wdata_in(rd_val_ex_to_exmem),
         .ex_waddr_in(rd_addr_ex_to_exmem),
@@ -102,6 +104,7 @@ module cpu(
         .imm_val_out(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
         .stalleq_from_id(stallreq_from_id),
+        .is_loading_out(loading_id_to_idex),
     );
 
     // Link id_ex to ex.
@@ -112,6 +115,7 @@ module cpu(
     wire [`InstTypeBus ]    inst_type_idex_to_ex;
     wire [`RegBus ]         imm_idex_to_ex;
     wire [`InstAddrBus ]    pc_idex_to_ex;
+    wire                    loading_idex_to_ex;
 
     id_ex ID_EX(
         .clk_in(clk_in),
@@ -131,6 +135,8 @@ module cpu(
         .imm_ex_out(imm_idex_to_ex),
         .pc_ex_out(pc_idex_to_ex),
         .stall(stall_info),
+        .id_loading(loading_id_to_idex),
+        .ex_loading(loading_idex_to_ex),
     );
 
     // Link ex to ex_mem, forwarding to id
@@ -138,6 +144,15 @@ module cpu(
     wire [`RegBus ]         rd_val_ex_to_exmem;
     wire [`RegAddrBus ]     rd_addr_ex_to_exmem;
     wire [`InstTypeBus ]    inst_type_ex_to_exmem;
+
+    // Link ex to ex_mem
+    wire                    load_ex_to_exmem;
+    wire                    store_ex_to_exmem;
+    wire [`InstAddrBus ]    mem_addr_ex_to_exmem;
+    wire [`RegBus ]         mem_val_ex_to_exmem;
+
+    // ex forwarding to id
+    wire                    ex_is_loading_ex_to_id;
 
     // Link ex to pc_reg
     wire [`InstAddrBus ]    pc_ex_to_pcreg;
@@ -151,21 +166,31 @@ module cpu(
         .inst_type_in(inst_type_idex_to_ex),
         .imm_in(imm_idex_to_ex),
         .pc_in(pc_idex_to_ex),
+        .is_loading_in(loading_idex_to_ex),
+        .ex_is_loading_out(ex_is_loading_ex_to_id),
         .rd_out(rd_ex_to_exmem),
         .rd_val_out(rd_val_ex_to_exmem),
         .rd_addr_out(rd_addr_ex_to_exmem),
         .inst_type_out(inst_type_ex_to_exmem),
+        .load_out(load_ex_to_exmem),
+        .store_out(store_ex_to_exmem),
+        .mem_addr_out(mem_addr_ex_to_exmem),
+        .mem_val_out(mem_val_ex_to_exmem),
         .pc_out(pc_ex_to_pcreg),
         .stallreq_from_ex(stallreq_from_ex),
         .branch_flag_out(branch_flag_ex_to_pc),
         .branch_target_addr_out(branch_target_addr_ex_to_pc),
     );
 
-    // Link ex_mem to mem, forwarding to id
+    // Link ex_mem to mem
     wire                    rd_exmem_to_mem;
     wire [`RegBus ]         rd_val_exmem_to_mem;
     wire [`RegAddrBus ]     rd_addr_exmem_to_mem;
     wire [`InstTypeBus ]    inst_type_exmem_to_mem;
+    wire                    load_exmem_to_mem;
+    wire                    store_exmem_to_mem;
+    wire [`InstAddrBus ]    mem_addr_exmem_to_mem;
+    wire [`RegBus ]         mem_val_exmem_to_mem;
 
     ex_mem EX_MEM(
         .clk_in(clk_in),
@@ -175,10 +200,18 @@ module cpu(
         .rd_val_ex_in(rd_val_ex_to_exmem),
         .rd_addr_ex_in(rd_addr_ex_to_exmem),
         .inst_type_ex_in(inst_type_ex_to_exmem),
+        .load_ex_in(load_ex_to_exmem),
+        .store_ex_in(store_ex_to_exmem),
+        .mem_addr_ex_in(mem_addr_ex_to_exmem),
+        .mem_val_ex_in(mem_val_ex_to_exmem),
         .rd_mem_out(rd_exmem_to_mem),
         .rd_val_mem_out(rd_val_exmem_to_mem),
         .rd_addr_mem_out(rd_addr_exmem_to_mem),
         .inst_type_mem_out(inst_type_exmem_to_mem),
+        .load_mem_out(load_exmem_to_mem),
+        .store_mem_out(store_exmem_to_mem),
+        .mem_addr_mem_out(mem_addr_exmem_to_mem),
+        .mem_val_mem_out(mem_val_exmem_to_mem),
         .stall(stall_info),
     );
 
@@ -192,7 +225,11 @@ module cpu(
         .rd_in(rd_exmem_to_mem),
         .rd_val_out(rd_val_exmem_to_mem),
         .rd_addr_in(rd_addr_exmem_to_mem),
-        .inst_type_in(inst_type_exmem_to_mem),  // todo: pc????
+        .inst_type_in(inst_type_exmem_to_mem),
+        .load_in(load_exmem_to_mem),
+        .store_in(store_exmem_to_mem),
+        .mem_addr_in(mem_addr_exmem_to_mem),
+        .mem_val_in(mem_val_exmem_to_mem),
         .rd_out(rd_mem_to_memwb),
         .rd_val_out(rd_val_mem_to_memwb),
         .rd_addr_out(rd_addr_mem_to_memwb)

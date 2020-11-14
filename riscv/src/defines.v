@@ -18,6 +18,8 @@
 `define NotStop         1'b0
 `define Branch          1'b1
 `define NotBranch       1'b0
+`define Loading         1'b1
+`define NotLoading      1'b0
 
 //-----------Regfile Related-----------
 `define RegAddrBus      4:0

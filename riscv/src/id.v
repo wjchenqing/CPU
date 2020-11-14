@@ -6,6 +6,7 @@ module id(
     input   wire[`InstBus]      inst_in,
 
     //forwarding from ex.
+    input   wire                ex_is_loading,
     input   wire                ex_wreg_in,     //1'b1 stands for having rd.
     input   wire[`RegBus]       ex_wdata_in,
     input   wire[`RegAddrBus]   ex_waddr_in,
@@ -33,6 +34,7 @@ module id(
     output  reg[`InstTypeBus]   inst_type_out,
     output  reg[`InstAddrBus]   pc_out,
     output  reg[`RegBus]        imm_val_out,
+    output  reg                 is_loading_out,
 
     //stall ctrl
     output  reg                 stalleq_from_id,
@@ -55,6 +57,7 @@ module id(
             inst_type_out <= `NOPInstType;
             imm <= `ZeroWord;
             pc_out <= `ZeroWord;
+            is_loading_out <= `NotLoading;
         end else begin
             case (opcode)
                 `opRI: begin
@@ -65,6 +68,7 @@ module id(
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
+                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3ADDI: begin
@@ -115,6 +119,7 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     imm <= `ZeroWord;
+                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3ADD_SUB: begin
@@ -160,6 +165,7 @@ module id(
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
+                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3BEQ: begin
@@ -191,6 +197,7 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
+                    is_loading_out <= `Loading ;
 
                     case (func3)
                         `f3LB: inst_type_out <= `LB;
@@ -209,6 +216,7 @@ module id(
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
+                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3SB: inst_type_out <= `SB;
@@ -226,6 +234,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `LUI;
+                    is_loading_out <= `NotLoading ;
                 end
                 `opAUIPC: begin
                     rs1_read_out <= `ReadDisable;
@@ -237,6 +246,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `AUIPC;
+                    is_loading_out <= `NotLoading ;
                 end
                 `opJAL: begin
                     rs1_read_out <= `ReadDisable;
@@ -248,6 +258,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
                     inst_type_out <= `JAL;
+                    is_loading_out <= `NotLoading ;
                 end
                 `opJALR: begin
                     rs1_read_out <= `ReadEnable;
@@ -259,6 +270,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
+                    is_loading_out <= `NotLoading ;
                 end
             endcase
             imm_val_out <= imm;
@@ -268,6 +280,8 @@ module id(
     always @ (*) begin
         if (rst_in == `RstEnable) begin
             rs1_val_out <= `ZeroWord ;
+        end else if ((ex_is_loading == `Loading) && (rs1_read_out == `ReadEnable) && (ex_waddr_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
+            stalleq_from_id <= `Stop ;
         end else if ((rs1_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
             rs1_val_out <= ex_wdata_in;
         end else if ((rs1_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs1_addr_out)) begin
@@ -282,6 +296,8 @@ module id(
     always @ (*) begin
         if (rst_in == `RstEnable) begin
             rs2_val_out <= `ZeroWord ;
+        end else if ((ex_is_loading == `Loading) && (rs2_read_out == `ReadEnable) && (ex_waddr_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
+            stalleq_from_id <= `Stop ;
         end else if ((rs2_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
             rs2_val_out <= ex_wdata_in;
         end else if ((rs2_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs2_addr_out)) begin

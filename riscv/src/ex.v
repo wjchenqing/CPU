@@ -10,17 +10,24 @@ module ex(
     input   wire[`InstTypeBus]  inst_type_in,
     input   wire[`RegBus]       imm_in,
     input   wire[`InstAddrBus]  pc_in,
+    input   wire                is_loading_in,
 
     output  reg                 rd_out,
     output  reg[`RegBus]        rd_val_out,
     output  reg[`RegAddrBus]    rd_addr_out,
     output  reg[`InstTypeBus]   inst_type_out,
 
+    output  reg                 load_out,
+    output  reg                 store_out,
+    output  reg[`InstAddrBus]   mem_addr_out,
+    output  reg[`RegBus]        mem_val_out,
 
     output  reg                 branch_flag_out,
     output  reg[`RegAddrBus ]   branch_target_addr_out,
 
-    output  wire                stallreq_from_ex
+    output  wire                stallreq_from_ex,
+
+    output  wire                ex_is_loading_out,
 );
 
     always @ (*) begin
@@ -29,6 +36,8 @@ module ex(
             rd_val_out <= `ZeroWord;
             rd_addr_out <= `NOPRegAdder;
             inst_type_out <= `NOPInstType;
+            load_out <= `ReadDisable ;
+            store_out <= `WriteDisable ;
             mem_addr_out <= `ZeroWord;
             mem_val_out <= `ZeroWord;
             branch_flag_out <= `NotBranch ;
@@ -37,6 +46,10 @@ module ex(
             rd_out <= rd_in;
             rd_addr_out <= rd_addr_in;
             inst_type_out <= inst_type_in;
+            load_out <= `ReadDisable ;
+            store_out <= `WriteDisable ;
+            mem_addr_out <= `ZeroWord ;
+            mem_val_out <= `ZeroWord ;
             branch_flag_out <= `NotBranch ;
             branch_target_addr_out <= `ZeroWord ;
             case (inst_type_in)
@@ -153,6 +166,41 @@ module ex(
                         branch_flag_out <= `NotBranch ;
                         branch_target_addr_out <= `ZeroWord ;
                     end
+                end
+                `LB: begin
+                    load_out <= `ReadEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                end
+                `LH: begin
+                    load_out <= `ReadEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                end
+                `LW: begin
+                    load_out <= `ReadEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                end
+                `LBU: begin
+                    load_out <= `ReadEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                end
+                `LHU: begin
+                    load_out <= `ReadEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                end
+                `SB : begin
+                    store_out <= `WriteEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                    mem_val_out <= rs2_val_in;
+                end
+                `SH : begin
+                    store_out <= `WriteEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                    mem_val_out <= rs2_val_in;
+                end
+                `SW : begin
+                    store_out <= `WriteEnable ;
+                    mem_addr_out <= rs1_val_in + imm_in;
+                    mem_val_out <= rs2_val_in;
                 end
             endcase
         end

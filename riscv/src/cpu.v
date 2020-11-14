@@ -31,12 +31,18 @@ module cpu(
     // Link pc_reg to if_id.
     wire [`InstAddrBus] pc;
 
+    // Link ex to ps_reg
+    wire                branch_flag_ex_to_pc;
+    wire [`InstAddrBus] branch_target_addr_ex_to_pc;
+
     pc_reg PC(
         .clk_in(clk_in),
         .rst_in(rst_in),
         .rdy_in(rdy_in),
         .pc_out(pc),
         .stall(stall_info),
+        .branch_flag_in(branch_flag_ex_to_pc),
+        .branch_target_addr_in(branch_target_addr_ex_to_pc),
     );
 
     // Link if_id to id.
@@ -93,7 +99,7 @@ module cpu(
         .rd_out(rd_id_to_idex),
         .rd_addr_out(rd_addr_id_to_idex),
         .inst_type_out(inst_type_id_to_idex),
-        .imm(imm_id_to_idex),
+        .imm_val_out(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
         .stalleq_from_id(stallreq_from_id),
     );
@@ -151,6 +157,8 @@ module cpu(
         .inst_type_out(inst_type_ex_to_exmem),
         .pc_out(pc_ex_to_pcreg),
         .stallreq_from_ex(stallreq_from_ex),
+        .branch_flag_out(branch_flag_ex_to_pc),
+        .branch_target_addr_out(branch_target_addr_ex_to_pc),
     );
 
     // Link ex_mem to mem, forwarding to id

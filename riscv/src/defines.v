@@ -16,6 +16,8 @@
 `define PCstep          32'h4
 `define Stop            1'b1
 `define NotStop         1'b0
+`define Branch          1'b1
+`define NotBranch       1'b0
 
 //-----------Regfile Related-----------
 `define RegAddrBus      4:0

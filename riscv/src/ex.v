@@ -17,7 +17,8 @@ module ex(
     output  reg[`InstTypeBus]   inst_type_out,
 
 
-    output  reg[`InstAddrBus]   pc_out,
+    output  reg                 branch_flag_out,
+    output  reg[`RegAddrBus ]   branch_target_addr_out,
 
     output  wire                stallreq_from_ex
 );
@@ -30,12 +31,14 @@ module ex(
             inst_type_out <= `NOPInstType;
             mem_addr_out <= `ZeroWord;
             mem_val_out <= `ZeroWord;
-            pc_out <= `ZeroWord;
+            branch_flag_out <= `NotBranch ;
+            branch_target_addr_out <= `ZeroWord ;
         end else begin
             rd_out <= rd_in;
             rd_addr_out <= rd_addr_in;
             inst_type_out <= inst_type_in;
-            pc_out <= pc_in;
+            branch_flag_out <= `NotBranch ;
+            branch_target_addr_out <= `ZeroWord ;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin
@@ -81,8 +84,76 @@ module ex(
                 `SRA: rd_val_out <= rs1_val_in >>> rs2_val_in[4:0];
                 `LUI: rd_val_out <= imm_in;
                 `AUIPC: rd_val_out <= imm_in + pc_in;
-                `JAL: rd_val_out <= pc_in + `PCstep;
-                `JALR: rd_val_out <= pc_in +`PCstep;
+                `JAL: begin
+                    branch_flag_out <= `Branch ;
+                    branch_target_addr_out <= pc_in + imm_in;
+                    rd_val_out <= pc_in + `PCstep ;
+                end
+                `JALR: begin
+                    branch_flag_out <= `Branch ;
+                    branch_target_addr_out <= rs1_val_in + imm_in;
+                    rd_val_out <= pc_in + `PCstep ;
+                end
+                `BEQ: begin
+                    rd_val_out <= `ZeroWord ;
+                    if (rs1_val_in == rs2_val_in) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
+                `BNE: begin
+                    rd_val_out <= `ZeroWord ;
+                    if (rs1_val_in != rs2_val_in) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
+                `BLT: begin
+                    rd_val_out <= `ZeroWord ;
+                    if ($signed(rs1_val_in) < $signed(rs2_val_in)) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
+                `BGE: begin
+                    rd_val_out <= `ZeroWord ;
+                    if ($signed(rs1_val_in) >= $signed(rs2_val_in)) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
+                `BLTU: begin
+                    rd_val_out <= `ZeroWord ;
+                    if (rs1_val_in < rs2_val_in) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
+                `BGEU: begin
+                    rd_val_out <= `ZeroWord ;
+                    if (rs1_val_in >= rs2_val_in) begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                    end else begin
+                        branch_flag_out <= `NotBranch ;
+                        branch_target_addr_out <= `ZeroWord ;
+                    end
+                end
             endcase
         end
 

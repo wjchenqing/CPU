@@ -32,6 +32,7 @@ module id(
     output  reg[`RegAddrBus]    rd_addr_out,
     output  reg[`InstTypeBus]   inst_type_out,
     output  reg[`InstAddrBus]   pc_out,
+    output  reg[`RegBus]        imm_val_out,
 
     //stall ctrl
     output  reg                 stalleq_from_id,
@@ -260,6 +261,7 @@ module id(
                     inst_type_out <= `JALR;
                 end
             endcase
+            imm_val_out <= imm;
         end
     end
 
@@ -273,8 +275,6 @@ module id(
         end else if (rs1_read_out == `ReadEnable ) begin
             rs1_val_out <= rs1_data_in;
         end else if (rs1_read_out == `ReadDisable ) begin
-            rs1_val_out <= imm;
-        end else begin
             rs1_val_out <= `ZeroWord ;
         end
     end
@@ -289,8 +289,6 @@ module id(
         end else if (rs2_read_out == `ReadEnable ) begin
             rs2_val_out <= rs2_data_in;
         end else if (rs2_read_out == `ReadDisable ) begin
-            rs2_val_out <= imm;
-        end else begin
             rs2_val_out <= `ZeroWord ;
         end
     end

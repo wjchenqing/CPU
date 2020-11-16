@@ -20,6 +20,7 @@
 `define NotBranch       1'b0
 `define Loading         1'b1
 `define NotLoading      1'b0
+`define RamBus          7:0
 
 //-----------Regfile Related-----------
 `define RegAddrBus      4:0

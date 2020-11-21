@@ -28,12 +28,12 @@ module cpu(
 // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
-    // Link pc_reg to if_id.
+    // Link pc_reg to if.
     wire [`InstAddrBus] pc;
 
     // Link ex to ps_reg
-    wire                branch_flag_ex_to_pc;
-    wire [`InstAddrBus] branch_target_addr_ex_to_pc;
+    wire                branch_flag_ex_out;
+    wire [`InstAddrBus] branch_target_addr_ex_out;
 
     pc_reg PC(
         .clk_in(clk_in),
@@ -41,8 +41,39 @@ module cpu(
         .rdy_in(rdy_in),
         .pc_out(pc),
         .stall(stall_info),
-        .branch_flag_in(branch_flag_ex_to_pc),
-        .branch_target_addr_in(branch_target_addr_ex_to_pc),
+        .branch_flag_in(branch_flag_ex_out),
+        .branch_target_addr_in(branch_target_addr_ex_out),
+    );
+
+    // Link if to if_id.
+    wire[`InstAddrBus ] pc_if_to_ifid;
+    wire[`InstBus ]     inst_if_to_ifid;
+
+    // Link if to ctrl.
+    wire                stall_req_if_to_ctrl;
+
+    // Link if to mem_ctrl.
+    wire                if_req_if_to_memctrl;
+    wire[`InstAddrBus ] inst_addr_if_to_memctrl;
+
+    // Link mem_ctrl to if.
+    wire[`InstBus ]     inst_memctrl_to_if;
+    wire[1:0]           busy_memctrl_to_if_and_mem;
+    wire                inst_done_memctrl_to_if;
+
+    If IF(
+        .rst_in(rst_in),
+        .pc(pc),
+        .if_req_out(if_req_if_to_memctrl),
+        .inst_addr_out(inst_addr_if_to_memctrl),
+        .inst_in(inst_memctrl_to_if),
+        .busy_in(busy_memctrl_to_if_and_mem),
+        .inst_done_in(inst_done_memctrl_to_if),
+        .branch_flag_in(branch_flag_ex_out),
+        .branch_target_addr_in(branch_target_addr_ex_out),
+        .stall_req_from_if(stall_req_if_to_ctrl),
+        .if_pc_out(pc_if_to_ifid),
+        .if_inst_out(inst_if_to_ifid),
     );
 
     // Link if_id to id.
@@ -52,8 +83,8 @@ module cpu(
     if_id IF_ID(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .if_pc(pc),
-        .if_inst(mem_dout),
+        .if_pc(pc_if_to_ifid),
+        .if_inst(inst_if_to_ifid),
         .id_pc(pc_ifid_to_id),
         .id_inst(inst_ifid_to_id),
         .stall(stall_info),
@@ -176,10 +207,9 @@ module cpu(
         .store_out(store_ex_to_exmem),
         .mem_addr_out(mem_addr_ex_to_exmem),
         .mem_val_out(mem_val_ex_to_exmem),
-        .pc_out(pc_ex_to_pcreg),
         .stallreq_from_ex(stallreq_from_ex),
-        .branch_flag_out(branch_flag_ex_to_pc),
-        .branch_target_addr_out(branch_target_addr_ex_to_pc),
+        .branch_flag_out(branch_flag_ex_out),
+        .branch_target_addr_out(branch_target_addr_ex_out),
     );
 
     // Link ex_mem to mem
@@ -220,8 +250,28 @@ module cpu(
     wire [`RegBus ]         rd_val_mem_to_memwb;
     wire [`RegAddrBus ]     rd_addr_mem_to_memwb;
 
+    // Link mem to mem_ctrl
+    wire                    read_req_mem_to_memctrl;
+    wire                    write_req_mem_to_memctrl;
+    wire[`InstAddrBus ]     mem_addr_mem_to_memctrl;
+    wire[`RegBus ]          mem_val_mem_to_memctrl;
+
+    // Link mem_ctrl to mem
+    wire                    mem_done_memctrl_to_mem;
+    wire[`RegBus ]          mem_val_read_memctrl_to_mem;
+
+    // Link mem to ctrl
+    wire                    stall_req_mem_to_ctrl;
+
     mem MEM(
         .rst_in(rst_in),
+        .mem_done_in(mem_done_memctrl_to_mem),
+        .mem_val_read_in(mem_val_read_memctrl_to_mem),
+        .memctrl_busy_in(busy_memctrl_to_if_and_mem),
+        .read_req_out(read_req_mem_to_memctrl),
+        .write_req_out(write_req_mem_to_memctrl),
+        .mem_addr_out(mem_addr_mem_to_memctrl),
+        .mem_val_out(mem_val_mem_to_memctrl),
         .rd_in(rd_exmem_to_mem),
         .rd_val_out(rd_val_exmem_to_mem),
         .rd_addr_in(rd_addr_exmem_to_mem),
@@ -232,7 +282,8 @@ module cpu(
         .mem_val_in(mem_val_exmem_to_mem),
         .rd_out(rd_mem_to_memwb),
         .rd_val_out(rd_val_mem_to_memwb),
-        .rd_addr_out(rd_addr_mem_to_memwb)
+        .rd_addr_out(rd_addr_mem_to_memwb),
+        .stall_req_from_mem(stall_req_mem_to_ctrl),
     );
 
     // Link mem_wb to regfile
@@ -274,11 +325,33 @@ module cpu(
 
     ctrl CTRL(
         .rst_in(rst_in),
+        .stallreq_from_if(stall_req_mem_to_ctrl),
+        .stallreq_from_mem(stall_req_mem_to_ctrl),
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
         .stall(stall_info),
     );
 
+    mem_ctrl MEM_CTRL(
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .rdy_in(rdy_in),
+        .if_req_in(if_req_if_to_memctrl),
+        .inst_addr_in(inst_addr_if_to_memctrl),
+        .inst_done(inst_done_memctrl_to_if),
+        .inst_out(inst_memctrl_to_if),
+        .read_req_in(read_req_mem_to_memctrl),
+        .write_req_in(write_req_mem_to_memctrl),
+        .mem_addr_in(mem_addr_mem_to_memctrl),
+        .mem_val_in(mem_val_mem_to_memctrl),
+        .mem_done(mem_done_memctrl_to_mem),
+        .mem_val_read_out(mem_val_read_memctrl_to_mem),
+        .rw_req_out(mem_wr),
+        .mem_addr_out(mem_a),
+        .mem_val_out(mem_dout),
+        .mem_val_read_in(mem_din),
+        .busy(busy_memctrl_to_if_and_mem),
+    );
 
 /*
 always @(posedge clk_in)

@@ -10,8 +10,8 @@ module mem_ctrl(
     input   wire[`InstAddrBus]  inst_addr_in,
 
     // to if
-    output  wire                inst_done,
-    output  wire[`RegBus]       inst_out,
+    output  reg                 inst_done,
+    output  reg [`RegBus]       inst_out,
 
     // from mem
     input   wire                read_req_in,
@@ -20,13 +20,13 @@ module mem_ctrl(
     input   wire[`RegBus ]      mem_val_in,
 
     // to mem
-    output  wire                mem_done,
-    output  wire[`RegBus]       mem_val_read_out,
+    output  reg                 mem_done,
+    output  reg[`RegBus]        mem_val_read_out,
 
     // to ram
-    output  wire                rw_req_out,
-    output  wire[`InstAddrBus]  mem_addr_out,
-    output  wire[`RamBus]       mem_val_out,
+    output  reg                 rw_req_out,
+    output  reg [`InstAddrBus]  mem_addr_out,
+    output  reg [`RamBus]       mem_val_out,
 
     //from ram
     input   wire[`RamBus]       mem_val_read_in,

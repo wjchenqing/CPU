@@ -45,7 +45,7 @@ module If(
             stall_req_from_if <= `NotStop ;
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
-        end else if (busy_in[1] == `True_v || busy_in == 2'b0) begin
+        end else if ((busy_in == 2'b10) || (busy_in == 2'b0)) begin
             if_req_out <= `True_v ;
             inst_addr_out <= pc;
             stall_req_from_if <= `Stop ;

@@ -5,6 +5,8 @@ module id_ex(
     input   wire            rst_in,
     input   wire[5:0]       stall,
 
+    input   wire            branch_flag_in,
+
     //form id
     input   wire[`RegBus]       rs1_val_id_in,
     input   wire[`RegBus]       rs2_val_id_in,
@@ -22,7 +24,7 @@ module id_ex(
     output  reg[`InstTypeBus]   inst_type_ex_out,
     output  reg[`RegBus]        imm_ex_out,
     output  reg[`InstAddrBus]   pc_ex_out,
-    output  reg                 ex_loading,
+    output  reg                 ex_loading
 );
 
     always @ (posedge clk_in) begin
@@ -34,7 +36,16 @@ module id_ex(
             inst_type_ex_out <= `NOPInstType;
             imm_ex_out <= `ZeroWord;
             pc_ex_out <= `ZeroWord;
+            ex_loading <= `False_v ;
         end else if (stall[2] == `Stop && stall[3] == `NotStop ) begin
+            rs1_val_ex_out <= `ZeroWord ;
+            rs2_val_ex_out <= `ZeroWord ;
+            rd_ex_out <= `WriteDisable ;
+            rd_addr_ex_out <= `NOPRegAdder ;
+            inst_type_ex_out <= `NOPInstType ;
+            imm_ex_out <= `ZeroWord ;
+            pc_ex_out <= `ZeroWord ;
+        end else if (branch_flag_in == `Branch) begin
             rs1_val_ex_out <= `ZeroWord ;
             rs2_val_ex_out <= `ZeroWord ;
             rd_ex_out <= `WriteDisable ;

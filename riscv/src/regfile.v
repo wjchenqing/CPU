@@ -21,11 +21,15 @@ module regfile(
 );
 
     //def
+    integer i;
     reg[`RegBus]    regs[0:`RegNum - 1];
 
     //write
     always @ (posedge clk_in) begin
-        if (rst == `RstDisable) begin
+        if (rst_in==`ReadEnable ) begin
+            for (i = 0; i < 32; i = i + 1)
+                regs[i] <= 0;
+        end else if (rst_in == `RstDisable) begin
             if ((we == `WriteEnable) && (waddr != `RegNumLog2'h0)) begin
                 regs[waddr] <= wdata;
             end
@@ -35,7 +39,7 @@ module regfile(
     //read1
     always @ (*) begin
         if (rst_in == `RstEnable) begin
-            rdata <= `ZeroWord;
+            rdata1 <= `ZeroWord;
         end else if (raddr1 == `RegNumLog2'h0) begin
             rdata1 <= `ZeroWord;
         end else if ((raddr1 == waddr) && (we == `WriteEnable) && (re1 == `ReadEnable)) begin
@@ -49,7 +53,7 @@ module regfile(
 
     //
     always @ (*) begin
-        if (rst == `RstEnable) begin
+        if (rst_in == `RstEnable) begin
             rdata2 <= `ZeroWord;
         end else if (raddr2 == `RegNumLog2'h0) begin
             rdata2 <= `ZeroWord;

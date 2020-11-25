@@ -1,4 +1,4 @@
-`include "define.v"
+`include "defines.v"
 
 module mem_wb(
     input   wire            clk_in,
@@ -12,7 +12,7 @@ module mem_wb(
 
     output  reg                 rd_wb_out,
     output  reg[`RegBus]        rd_val_wb_out,
-    output  reg[`RegAddrBus]    rd_addr_wb_out,
+    output  reg[`RegAddrBus]    rd_addr_wb_out
 );
 
     always @ (posedge clk_in) begin

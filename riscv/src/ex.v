@@ -12,6 +12,8 @@ module ex(
     input   wire[`InstAddrBus]  pc_in,
     input   wire                is_loading_in,
 
+    input   wire[`RegBus ]      rd_val_from_mem,
+
     output  reg                 rd_out,
     output  reg[`RegBus]        rd_val_out,
     output  reg[`RegAddrBus]    rd_addr_out,
@@ -23,11 +25,11 @@ module ex(
     output  reg[`RegBus]        mem_val_out,
 
     output  reg                 branch_flag_out,
-    output  reg[`RegAddrBus ]   branch_target_addr_out,
+    output  reg[`InstAddrBus  ]   branch_target_addr_out,
 
-    output  wire                stallreq_from_ex,
+    output  reg                stallreq_from_ex,
 
-    output  wire                ex_is_loading_out,
+    output  reg                ex_is_loading_out
 );
 
     always @ (*) begin
@@ -42,6 +44,8 @@ module ex(
             mem_val_out <= `ZeroWord;
             branch_flag_out <= `NotBranch ;
             branch_target_addr_out <= `ZeroWord ;
+            ex_is_loading_out <= 1'b0;
+            stallreq_from_ex <= `NotStop ;
         end else begin
             rd_out <= rd_in;
             rd_addr_out <= rd_addr_in;
@@ -75,6 +79,7 @@ module ex(
                 `SRLI: rd_val_out <= rs1_val_in >> imm_in[4:0];
                 `SRAI: rd_val_out <= rs1_val_in >>> imm_in[4:0];
                 `ADD: rd_val_out <= rs1_val_in + rs2_val_in;
+                `SUB: rd_val_out <= rs1_val_in - rs2_val_in;
                 `SLT: begin
                     if ($signed(rs1_val_in) < $signed(rs2_val_in)) begin
                         rd_val_out <= 1'b1;
@@ -99,12 +104,12 @@ module ex(
                 `AUIPC: rd_val_out <= imm_in + pc_in;
                 `JAL: begin
                     branch_flag_out <= `Branch ;
-                    branch_target_addr_out <= pc_in + imm_in;
+                    branch_target_addr_out = pc_in + imm_in;
                     rd_val_out <= pc_in + `PCstep ;
                 end
                 `JALR: begin
                     branch_flag_out <= `Branch ;
-                    branch_target_addr_out <= rs1_val_in + imm_in;
+                    branch_target_addr_out <= (rs1_val_in + imm_in) & 32'hFFFFFFFE;
                     rd_val_out <= pc_in + `PCstep ;
                 end
                 `BEQ: begin
@@ -168,22 +173,27 @@ module ex(
                     end
                 end
                 `LB: begin
+                    rd_val_out <= rd_val_from_mem;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LH: begin
+                    rd_val_out <= rd_val_from_mem;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LW: begin
+                    rd_val_out <= rd_val_from_mem;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LBU: begin
+                    rd_val_out <= rd_val_from_mem;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LHU: begin
+                    rd_val_out <= rd_val_from_mem;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
@@ -201,6 +211,20 @@ module ex(
                     store_out <= `WriteEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                     mem_val_out <= rs2_val_in;
+                end
+                default : begin
+                    rd_out <= `WriteDisable;
+                    rd_val_out <= `ZeroWord;
+                    rd_addr_out <= `NOPRegAdder;
+                    inst_type_out <= `NOPInstType;
+                    load_out <= `ReadDisable ;
+                    store_out <= `WriteDisable ;
+                    mem_addr_out <= `ZeroWord;
+                    mem_val_out <= `ZeroWord;
+                    branch_flag_out <= `NotBranch ;
+                    branch_target_addr_out <= `ZeroWord ;
+                    ex_is_loading_out <= 1'b0;
+                    stallreq_from_ex <= `NotStop ;
                 end
             endcase
         end

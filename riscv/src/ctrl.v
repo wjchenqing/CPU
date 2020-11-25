@@ -6,7 +6,7 @@ module ctrl(
     input   wire        stallreq_from_id,
     input   wire        stallreq_from_ex,
     input   wire        stallreq_from_mem,
-    output  reg[5:0]    stall,              //1 stands for can  continue.
+    output  reg[5:0]    stall              //1 stands for can  continue.
 );
 
     always @ (*) begin

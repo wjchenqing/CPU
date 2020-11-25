@@ -5,6 +5,7 @@
 if [ -f ./testcase/$@.in ]; then cp ./testcase/$@.in ./test/test.in; fi
 # copy test output
 if [ -f ./testcase/$@.ans ]; then cp ./testcase/$@.ans ./test/test.ans; fi
+cp ./test/test.data ./test/test.mem
 # add your own test script here
 # Example:
 # - iverilog/gtkwave/vivado

@@ -37,7 +37,7 @@ module id(
     output  reg                 is_loading_out,
 
     //stall ctrl
-    output  reg                 stalleq_from_id,
+    output  reg                 stalleq_from_id
 );
 
     wire [6:0] opcode = inst_in[6 :0 ];
@@ -53,12 +53,18 @@ module id(
             rs2_read_out <= `ReadDisable;
             rs1_addr_out <= `NOPRegAdder;
             rs2_addr_out <= `NOPRegAdder;
+            rs1_val_out <= `ZeroWord ;
+            rs2_val_out <= `ZeroWord ;
+            rd_out <= `ZeroWord ;
             rd_addr_out <= `NOPRegAdder;
             inst_type_out <= `NOPInstType;
             imm <= `ZeroWord;
+            imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
             is_loading_out <= `NotLoading;
+            stalleq_from_id <= `NotStop ;
         end else begin
+            inst_type_out <= `NOPInstType;
             case (opcode)
                 `opRI: begin
                     rs1_read_out <= `ReadEnable;
@@ -175,7 +181,7 @@ module id(
                             inst_type_out <= `BNE;
                         end
                         `f3BLT: begin
-                            inst_type_out <= `BNE;
+                            inst_type_out <= `BLT;
                         end
                         `f3BGE: begin
                             inst_type_out <= `BGE;
@@ -271,6 +277,20 @@ module id(
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
                     is_loading_out <= `NotLoading ;
+                end
+                default : begin
+                    rs1_read_out <= `ReadDisable;
+                    rs2_read_out <= `ReadDisable;
+                    rs1_addr_out <= `NOPRegAdder;
+                    rs2_addr_out <= `NOPRegAdder;
+                    rd_out <= `ZeroWord ;
+                    rd_addr_out <= `NOPRegAdder;
+                    inst_type_out <= `NOPInstType;
+                    imm <= `ZeroWord;
+                    imm_val_out <= `ZeroWord;
+                    pc_out <= `ZeroWord;
+                    is_loading_out <= `NotLoading;
+                    stalleq_from_id <= `NotStop ;
                 end
             endcase
             imm_val_out <= imm;

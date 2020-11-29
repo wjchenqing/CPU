@@ -141,6 +141,10 @@
 `define InstAddrBus     31:0
 `define InstBus         31:0
 
-
+//---------ICACHE-------------
+`define ICacheNum       128
+`define CacheAddrRange  8:2
+`define TagBus          8:0
+`define TagRange        17:9
 
 

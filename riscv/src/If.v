@@ -20,25 +20,42 @@ module If(
     output  reg[`InstAddrBus ] if_pc_out,
     output  reg[`InstBus ]     if_inst_out
 );
+
+    reg[`InstBus ]      cache_data[`ICacheNum - 1 : 0];
+    reg[`TagBus ]       cache_tag [`ICacheNum - 1 : 0];
+
+    reg[31:0] i;
+
     always @ (*) begin
         if (rst_in == `RstEnable) begin
             if_req_out <= 1'b0;
-            inst_addr_out <= `ZeroWord ;
+            inst_addr_out <= `ZeroWord;
             stall_req_from_if <= `NotStop ;
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
+            for (i = 0; i < `ICacheNum ; i = i+1) begin
+                cache_tag[i] = -1;
+            end
         end else if (branch_flag_in == `Branch ) begin
             if_req_out <= 1'b0;
             inst_addr_out <= `ZeroWord ;
             stall_req_from_if <= `NotStop ;
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
+        end else if (cache_tag[pc[`CacheAddrRange]] == pc[`TagRange]) begin
+            if_req_out <= `False_v ;
+            inst_addr_out <= `ZeroWord ;
+            stall_req_from_if <= `NotStop ;
+            if_pc_out <= pc;
+            if_inst_out <= cache_data[pc[`CacheAddrRange]];
         end else if (inst_done_in == 1'b1) begin
             if_req_out <= 1'b0;
             inst_addr_out <= `ZeroWord ;
             stall_req_from_if <= `NotStop ;
             if_pc_out <= pc;
             if_inst_out <= inst_in;
+            cache_tag[pc[`CacheAddrRange]] <= pc[`TagRange];
+            cache_data[pc[`CacheAddrRange]] <= inst_in;
         end else if (busy_in[0] == `True_v ) begin
             if_req_out <= 1'b0;
             inst_addr_out <= pc ;

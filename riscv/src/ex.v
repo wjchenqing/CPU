@@ -104,7 +104,7 @@ module ex(
                 `AUIPC: rd_val_out <= imm_in + pc_in;
                 `JAL: begin
                     branch_flag_out <= `Branch ;
-                    branch_target_addr_out = pc_in + imm_in;
+                    branch_target_addr_out <= pc_in + imm_in;
                     rd_val_out <= pc_in + `PCstep ;
                 end
                 `JALR: begin

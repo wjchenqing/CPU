@@ -47,6 +47,7 @@ module ex(
             ex_is_loading_out <= 1'b0;
             stallreq_from_ex <= `NotStop ;
         end else begin
+            ex_is_loading_out <= is_loading_in;
             rd_out <= rd_in;
             rd_addr_out <= rd_addr_in;
             inst_type_out <= inst_type_in;

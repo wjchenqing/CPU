@@ -21,6 +21,8 @@ module if_id(
         end else if (stall[1] == `Stop && stall[2] == `NotStop ) begin
             id_pc <= `ZeroWord ;
             id_inst <= `ZeroWord ;
+        end else if (stall[1] == `Stop) begin
+
         end else if (branch_flag_in == `Branch ) begin
             id_pc <= `ZeroWord ;
             id_inst <= `ZeroWord ;

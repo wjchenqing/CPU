@@ -45,6 +45,9 @@ module id_ex(
             inst_type_ex_out <= `NOPInstType ;
             imm_ex_out <= `ZeroWord ;
             pc_ex_out <= `ZeroWord ;
+            ex_loading <= `False_v ;
+        end else if (stall[2] == `Stop) begin
+
         end else if (branch_flag_in == `Branch) begin
             rs1_val_ex_out <= `ZeroWord ;
             rs2_val_ex_out <= `ZeroWord ;
@@ -53,6 +56,7 @@ module id_ex(
             inst_type_ex_out <= `NOPInstType ;
             imm_ex_out <= `ZeroWord ;
             pc_ex_out <= `ZeroWord ;
+            ex_loading <= `False_v ;
         end else if (stall[2] == `NotStop ) begin
             rs1_val_ex_out <= rs1_val_id_in;
             rs2_val_ex_out <= rs2_val_id_in;
@@ -61,6 +65,7 @@ module id_ex(
             inst_type_ex_out <= inst_type_id_in;
             imm_ex_out <= imm_id_in;
             pc_ex_out <= pc_id_in;
+            ex_loading <= id_loading;
         end
     end
 

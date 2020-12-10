@@ -37,7 +37,7 @@ module id(
     output  reg                 is_loading_out,
 
     //stall ctrl
-    output  reg                 stalleq_from_id
+    output  wire                stalleq_from_id
 );
 
     wire [6:0] opcode = inst_in[6 :0 ];
@@ -62,7 +62,6 @@ module id(
             imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
             is_loading_out <= `NotLoading;
-            stalleq_from_id <= `NotStop ;
         end else begin
             inst_type_out <= `NOPInstType;
             case (opcode)
@@ -290,43 +289,55 @@ module id(
                     imm_val_out <= `ZeroWord;
                     pc_out <= `ZeroWord;
                     is_loading_out <= `NotLoading;
-                    stalleq_from_id <= `NotStop ;
                 end
             endcase
             imm_val_out <= imm;
         end
     end
 
+    reg stalleq1, stalleq2;
+
     always @ (*) begin
-        if (rst_in == `RstEnable) begin
+        if ((rst_in == `RstEnable) || (rs1_read_out == `ReadDisable)) begin
             rs1_val_out <= `ZeroWord ;
-        end else if ((ex_is_loading == `Loading) && (rs1_read_out == `ReadEnable) && (ex_waddr_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
-            stalleq_from_id <= `Stop ;
-        end else if ((rs1_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
+            stalleq1 <= `NotStop ;
+        end else if ((ex_is_loading == `Loading) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
+            rs1_val_out <= `ZeroWord ;
+            stalleq1 <= `Stop ;
+        end else if ((ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
             rs1_val_out <= ex_wdata_in;
-        end else if ((rs1_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs1_addr_out)) begin
+            stalleq1 <= `NotStop ;
+        end else if ((mem_wreg_in == 1'b1) && (mem_waddr_in == rs1_addr_out)) begin
             rs1_val_out <= mem_wdata_in;
+            stalleq1 <= `NotStop ;
         end else if (rs1_read_out == `ReadEnable ) begin
             rs1_val_out <= rs1_data_in;
-        end else if (rs1_read_out == `ReadDisable ) begin
-            rs1_val_out <= `ZeroWord ;
+            stalleq1 <= `NotStop ;
         end
     end
 
     always @ (*) begin
-        if (rst_in == `RstEnable) begin
+        if ((rst_in == `RstEnable) || (rs2_read_out == `ReadDisable)) begin
             rs2_val_out <= `ZeroWord ;
-        end else if ((ex_is_loading == `Loading) && (rs2_read_out == `ReadEnable) && (ex_waddr_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
-            stalleq_from_id <= `Stop ;
-        end else if ((rs2_read_out == `ReadEnable) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
+            stalleq2 <= `NotStop ;
+        end else if ((ex_is_loading == `Loading) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
+            rs2_val_out <= `ZeroWord ;
+            stalleq2 <= `Stop ;
+        end else if ((ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin
             rs2_val_out <= ex_wdata_in;
-        end else if ((rs2_read_out == `ReadEnable ) && (mem_wreg_in == 1'b1) && (mem_waddr_in == rs2_addr_out)) begin
+            stalleq2 <= `NotStop ;
+        end else if ((mem_wreg_in == 1'b1) && (mem_waddr_in == rs2_addr_out)) begin
             rs2_val_out <= mem_wdata_in;
+            stalleq2 <= `NotStop ;
         end else if (rs2_read_out == `ReadEnable ) begin
             rs2_val_out <= rs2_data_in;
+            stalleq2 <= `NotStop ;
         end else if (rs2_read_out == `ReadDisable ) begin
             rs2_val_out <= `ZeroWord ;
+            stalleq2 <= `NotStop ;
         end
     end
+
+    assign stalleq_from_id = stalleq1 | stalleq2;
 
 endmodule : id

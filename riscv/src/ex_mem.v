@@ -55,15 +55,6 @@ module ex_mem(
             store_mem_out <= store_ex_in ;
             mem_addr_mem_out <= mem_addr_ex_in;
             mem_val_mem_out <= mem_val_ex_in;
-        end else if (stall[3] == `Stop && stall[4] == `NotStop ) begin
-            rd_mem_out <= `WriteDisable ;
-            rd_val_mem_out <= `ZeroWord ;
-            rd_addr_mem_out <= `NOPRegAdder ;
-            inst_type_mem_out <= `NOPInstType ;
-            load_mem_out <= `ReadDisable ;
-            store_mem_out <= `WriteDisable ;
-            mem_addr_mem_out <= `ZeroWord ;
-            mem_val_mem_out <= `ZeroWord ;
         end
     end
 

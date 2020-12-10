@@ -60,8 +60,10 @@ module mem(
                 `LBU :rd_val_out <= {24'b0,mem_val_read_in[7:0]};
             endcase
             stall_req_from_mem <= `False_v ;
+            store_len <= 2'b0;
         end else if (load_in == `True_v ) begin
             stall_req_from_mem <= `True_v ;
+            store_len <= 2'b0;
             if (memctrl_busy_in == 2'b01 || memctrl_busy_in == 2'b0) begin
                 read_req_out <= `True_v ;
                 write_req_out <= `False_v ;
@@ -117,6 +119,7 @@ module mem(
             rd_addr_out <= rd_addr_in;
             rd_val_out <= rd_val_in;
             stall_req_from_mem <= `False_v ;
+            store_len <= 2'b0;
         end
     end
 

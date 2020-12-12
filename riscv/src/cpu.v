@@ -1,18 +1,5 @@
 // RISCV32I CPU top module
 // port modification allowed for debugging purposes
-`include "defines.v"
-`include "ctrl.v"
-`include "ex.v"
-`include "ex_mem.v"
-`include "id.v"
-`include "id_ex.v"
-`include "If.v"
-`include "if_id.v"
-`include "mem.v"
-`include "mem_ctrl.v"
-`include "mem_wb.v"
-`include "pc_reg.v"
-`include "regfile.v"
 
 module cpu(
     input  wire                 clk_in,			// system clock signal

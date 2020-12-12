@@ -33,6 +33,7 @@ module If(
     initial begin
         for (i = 0; i < `ICacheNum ; i = i+1) begin
             cache_tag[i] = -1;
+            cache_data[i] = `ZeroWord ;
         end
     end
     
@@ -67,6 +68,12 @@ module If(
             stall_req_from_if <= `Stop ;
             cache_done <= `False_v ;
             cache_inst <= `ZeroWord ;
+        end else begin
+            if_req_out <= `False_v ;
+            inst_addr_out <= `ZeroWord ;
+            stall_req_from_if <= `NotStop ;
+            cache_done <= `False_v ;
+            cache_inst <= `ZeroWord ;
         end
     end
 
@@ -80,6 +87,9 @@ module If(
         end else if (cache_done == `True_v) begin
             if_pc_out <= pc;
             if_inst_out <= cache_inst;
+        end else begin
+            if_pc_out <= `ZeroWord ;
+            if_inst_out <= `ZeroWord ;
         end
     end
 

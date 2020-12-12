@@ -49,6 +49,7 @@ module ex(
         end else begin
             ex_is_loading_out <= is_loading_in;
             rd_out <= rd_in;
+            rd_val_out <= `ZeroWord;
             rd_addr_out <= rd_addr_in;
             inst_type_out <= inst_type_in;
             load_out <= `ReadDisable ;
@@ -57,6 +58,7 @@ module ex(
             mem_val_out <= `ZeroWord ;
             branch_flag_out <= `NotBranch ;
             branch_target_addr_out <= `ZeroWord ;
+            stallreq_from_ex <= `NotStop ;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin

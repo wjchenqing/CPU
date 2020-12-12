@@ -5,9 +5,10 @@
 if [ -f ./testcase/$@.in ]; then cp ./testcase/$@.in ./test/test.in; fi
 # copy test output
 if [ -f ./testcase/$@.ans ]; then cp ./testcase/$@.ans ./test/test.ans; fi
+cp ./test/test.data ./test/test.mem
 # add your own test script here
 # Example: assuming serial port on /dev/ttyUSB1
 ./ctrl/build.sh
-./ctrl/run.sh ./test/test.bin ./test/test.in /dev/ttyUSB1 -I
+./ctrl/run.sh ./test/test.bin ./test/test.in /dev/ttyS4 -I
 #./ctrl/run.sh ./test/test.bin ./test/test.in /dev/ttyUSB1 -T > ./test/test.out
 #if [ -f ./test/test.ans ]; then diff ./test/test.ans ./test/test.out; fi

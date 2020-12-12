@@ -53,8 +53,6 @@ module id(
             rs2_read_out <= `ReadDisable;
             rs1_addr_out <= `NOPRegAdder;
             rs2_addr_out <= `NOPRegAdder;
-            rs1_val_out <= `ZeroWord ;
-            rs2_val_out <= `ZeroWord ;
             rd_out <= `ZeroWord ;
             rd_addr_out <= `NOPRegAdder;
             inst_type_out <= `NOPInstType;

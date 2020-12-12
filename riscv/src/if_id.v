@@ -3,6 +3,7 @@
 module if_id(
     input   wire        clk_in,
     input   wire        rst_in,
+    input   wire        rdy_in,
     input   wire[5:0]   stall,
 
     input   wire        branch_flag_in,
@@ -18,17 +19,19 @@ module if_id(
         if (rst_in == `RstEnable) begin
             id_pc <= `ZeroWord;
             id_inst <= `ZeroWord;
-        end else if (stall[1] == `Stop && stall[2] == `NotStop ) begin
-            id_pc <= `ZeroWord ;
-            id_inst <= `ZeroWord ;
-        end else if (stall[1] == `Stop) begin
+        end else if (rdy_in == 1'b1) begin
+            if (stall[1] == `Stop && stall[2] == `NotStop ) begin
+                id_pc <= `ZeroWord ;
+                id_inst <= `ZeroWord ;
+            end else if (stall[1] == `Stop) begin
 
-        end else if (branch_flag_in == `Branch ) begin
-            id_pc <= `ZeroWord ;
-            id_inst <= `ZeroWord ;
-        end else if (stall[1] == `NotStop ) begin
-            id_pc <= if_pc;
-            id_inst <= if_inst;
+            end else if (branch_flag_in == `Branch ) begin
+                id_pc <= `ZeroWord ;
+                id_inst <= `ZeroWord ;
+            end else if (stall[1] == `NotStop ) begin
+                id_pc <= if_pc;
+                id_inst <= if_inst;
+            end
         end
     end
 

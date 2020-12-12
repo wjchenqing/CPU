@@ -3,6 +3,7 @@
 module id_ex(
     input   wire            clk_in,
     input   wire            rst_in,
+    input   wire            rdy_in,
     input   wire[5:0]       stall,
 
     input   wire            branch_flag_in,
@@ -37,35 +38,37 @@ module id_ex(
             imm_ex_out <= `ZeroWord;
             pc_ex_out <= `ZeroWord;
             ex_loading <= `False_v ;
-        end else if (stall[2] == `Stop && stall[3] == `NotStop ) begin
-            rs1_val_ex_out <= `ZeroWord ;
-            rs2_val_ex_out <= `ZeroWord ;
-            rd_ex_out <= `WriteDisable ;
-            rd_addr_ex_out <= `NOPRegAdder ;
-            inst_type_ex_out <= `NOPInstType ;
-            imm_ex_out <= `ZeroWord ;
-            pc_ex_out <= `ZeroWord ;
-            ex_loading <= `False_v ;
-        end else if (stall[2] == `Stop) begin
+        end else if (rdy_in == 1'b1) begin
+            if (stall[2] == `Stop && stall[3] == `NotStop ) begin
+                rs1_val_ex_out <= `ZeroWord ;
+                rs2_val_ex_out <= `ZeroWord ;
+                rd_ex_out <= `WriteDisable ;
+                rd_addr_ex_out <= `NOPRegAdder ;
+                inst_type_ex_out <= `NOPInstType ;
+                imm_ex_out <= `ZeroWord ;
+                pc_ex_out <= `ZeroWord ;
+                ex_loading <= `False_v ;
+            end else if (stall[2] == `Stop) begin
 
-        end else if (branch_flag_in == `Branch) begin
-            rs1_val_ex_out <= `ZeroWord ;
-            rs2_val_ex_out <= `ZeroWord ;
-            rd_ex_out <= `WriteDisable ;
-            rd_addr_ex_out <= `NOPRegAdder ;
-            inst_type_ex_out <= `NOPInstType ;
-            imm_ex_out <= `ZeroWord ;
-            pc_ex_out <= `ZeroWord ;
-            ex_loading <= `False_v ;
-        end else if (stall[2] == `NotStop ) begin
-            rs1_val_ex_out <= rs1_val_id_in;
-            rs2_val_ex_out <= rs2_val_id_in;
-            rd_ex_out <= rd_id_in;
-            rd_addr_ex_out <= rd_addr_id_in;
-            inst_type_ex_out <= inst_type_id_in;
-            imm_ex_out <= imm_id_in;
-            pc_ex_out <= pc_id_in;
-            ex_loading <= id_loading;
+            end else if (branch_flag_in == `Branch) begin
+                rs1_val_ex_out <= `ZeroWord ;
+                rs2_val_ex_out <= `ZeroWord ;
+                rd_ex_out <= `WriteDisable ;
+                rd_addr_ex_out <= `NOPRegAdder ;
+                inst_type_ex_out <= `NOPInstType ;
+                imm_ex_out <= `ZeroWord ;
+                pc_ex_out <= `ZeroWord ;
+                ex_loading <= `False_v ;
+            end else if (stall[2] == `NotStop ) begin
+                rs1_val_ex_out <= rs1_val_id_in;
+                rs2_val_ex_out <= rs2_val_id_in;
+                rd_ex_out <= rd_id_in;
+                rd_addr_ex_out <= rd_addr_id_in;
+                inst_type_ex_out <= inst_type_id_in;
+                imm_ex_out <= imm_id_in;
+                pc_ex_out <= pc_id_in;
+                ex_loading <= id_loading;
+            end
         end
     end
 

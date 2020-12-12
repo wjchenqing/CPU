@@ -166,6 +166,7 @@ module cpu(
     );
 
     If IF(
+        .clk_in(clk_in),
         .rst_in(rst_in),
         .pc(pc),
         .if_req_out(if_req_if_to_memctrl),
@@ -183,6 +184,7 @@ module cpu(
     if_id IF_ID(
         .clk_in(clk_in),
         .rst_in(rst_in),
+        .rdy_in(rdy_in),
         .branch_flag_in(branch_flag_ex_out),
         .if_pc(pc_if_to_ifid),
         .if_inst(inst_if_to_ifid),
@@ -222,6 +224,7 @@ module cpu(
     id_ex ID_EX(
         .clk_in(clk_in),
         .rst_in(rst_in),
+        .rdy_in(rdy_in),
         .branch_flag_in(branch_flag_ex_out),
         .rs1_val_id_in(rs1_val_id_to_idex),
         .rs2_val_id_in(rs2_val_id_to_idex),
@@ -330,6 +333,7 @@ module cpu(
     regfile REGFILE(
         .clk_in(clk_in),
         .rst_in(rst_in),
+        .rdy_in(rdy_in),
         .we(rd_wb_to_regfile),
         .wdata(rd_val_wb_to_regfile),
         .waddr(rd_addr_wb_to_regfile),

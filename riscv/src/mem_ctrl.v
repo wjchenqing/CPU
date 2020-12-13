@@ -74,13 +74,12 @@ module mem_ctrl(
                 inst_done <= 1'b0;
                 mem_done <= 1'b0;
                 case (cnt)
-                    3'b001: val_out[7:0] <= mem_val_read_in;
-                    3'b010: val_out[15:8] <= mem_val_read_in;
-                    3'b011: val_out[23:16] <= mem_val_read_in;
-                    3'b100: val_out[31:24] <= mem_val_read_in;
+                    3'b001: val_out[7:0] = mem_val_read_in;
+                    3'b010: val_out[15:8] = mem_val_read_in;
+                    3'b011: val_out[23:16] = mem_val_read_in;
+                    3'b100: val_out[31:24] = mem_val_read_in;
                 endcase
-                if (cnt == 3'b100) begin
-                    val_out[31:24] = mem_val_read_in;
+                if (cnt == store_len) begin
                     mem_val_read_out <= val_out;
                     cnt <= 2'b00;
                     busy <= 2'b00;

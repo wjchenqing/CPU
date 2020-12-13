@@ -72,6 +72,13 @@ module mem(
             rd_addr_out <= `NOPRegAdder;
             stall_req_from_mem <= `True_v ;
             store_len <= 2'b0;
+            case (inst_type_in)
+                `LW : store_len <= 3'b100;
+                `LH : store_len <= 3'b010;
+                `LHU :store_len <= 3'b010;
+                `LB : store_len <= 3'b001;
+                `LBU :store_len <= 3'b001;
+            endcase
             if (memctrl_busy_in == 2'b01 || memctrl_busy_in == 2'b0) begin
                 read_req_out <= `True_v ;
                 write_req_out <= `False_v ;

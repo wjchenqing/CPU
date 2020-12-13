@@ -28,6 +28,9 @@ module cpu(
 // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
+    wire rdy;
+    assign rdy = rdy_in & (!io_buffer_full);
+
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;
 
@@ -145,7 +148,7 @@ module cpu(
     pc_reg PC(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .pc_out(pc),
         .stall(stall_info),
         .branch_flag_in(branch_flag_ex_out),
@@ -155,6 +158,7 @@ module cpu(
     If IF(
         .clk_in(clk_in),
         .rst_in(rst_in),
+        .rdy(rdy),
         .pc(pc),
         .if_req_out(if_req_if_to_memctrl),
         .inst_addr_out(inst_addr_if_to_memctrl),
@@ -171,7 +175,7 @@ module cpu(
     if_id IF_ID(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .branch_flag_in(branch_flag_ex_out),
         .if_pc(pc_if_to_ifid),
         .if_inst(inst_if_to_ifid),
@@ -211,7 +215,7 @@ module cpu(
     id_ex ID_EX(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .branch_flag_in(branch_flag_ex_out),
         .rs1_val_id_in(rs1_val_id_to_idex),
         .rs2_val_id_in(rs2_val_id_to_idex),
@@ -260,7 +264,7 @@ module cpu(
     ex_mem EX_MEM(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .rd_ex_in(rd_ex_to_exmem),
         .rd_val_ex_in(rd_val_ex_to_exmem),
         .rd_addr_ex_in(rd_addr_ex_to_exmem),
@@ -307,7 +311,7 @@ module cpu(
     mem_wb MEM_WB(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .rd_mem_in(rd_mem_to_memwb),
         .rd_val_mem_in(rd_val_mem_to_memwb),
         .rd_addr_mem_in(rd_addr_mem_to_memwb),
@@ -320,7 +324,7 @@ module cpu(
     regfile REGFILE(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .we(rd_wb_to_regfile),
         .wdata(rd_val_wb_to_regfile),
         .waddr(rd_addr_wb_to_regfile),
@@ -344,7 +348,7 @@ module cpu(
     mem_ctrl MEM_CTRL(
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .rdy_in(rdy_in),
+        .rdy_in(rdy),
         .if_req_in(if_req_if_to_memctrl),
         .inst_addr_in(inst_addr_if_to_memctrl),
         .inst_done(inst_done_memctrl_to_if),

@@ -3,6 +3,7 @@
 module If(
     input   wire        clk_in,
     input   wire        rst_in,
+    input   wire        rdy,
 
     input   wire[`InstAddrBus]        pc,
 
@@ -94,7 +95,7 @@ module If(
     end
 
     always @ (posedge clk_in) begin
-        if ((rst_in == `RstDisable) && (cache_done == `True_v )) begin
+        if (rdy && (rst_in == `RstDisable) && (cache_done == `True_v )) begin
             cache_tag[pc[`CacheAddrRange]] <= pc[`TagRange];
             cache_data[pc[`CacheAddrRange]] <= cache_inst;
         end

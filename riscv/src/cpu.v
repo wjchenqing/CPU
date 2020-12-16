@@ -33,6 +33,7 @@ module cpu(
 
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;
+    wire                iccorect;
 
     // Link ex to ps_reg
     wire                branch_flag_ex_out;
@@ -176,7 +177,7 @@ module cpu(
         .clk_in(clk_in),
         .rst_in(rst_in),
         .rdy_in(rdy),
-        .branch_flag_in(branch_flag_ex_out),
+        .branch_flag_in(iccorect),
         .if_pc(pc_if_to_ifid),
         .if_inst(inst_if_to_ifid),
         .id_pc(pc_ifid_to_id),
@@ -216,7 +217,7 @@ module cpu(
         .clk_in(clk_in),
         .rst_in(rst_in),
         .rdy_in(rdy),
-        .branch_flag_in(branch_flag_ex_out),
+        .branch_flag_in(iccorect),
         .rs1_val_id_in(rs1_val_id_to_idex),
         .rs2_val_id_in(rs2_val_id_to_idex),
         .rd_id_in(rd_id_to_idex),

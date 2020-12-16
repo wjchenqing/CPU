@@ -147,4 +147,8 @@
 `define TagBus          8:0
 `define TagRange        17:9
 
-
+//------------BTB------------
+`define BTBNum          32
+`define BTBAddrRange    6:2
+`define BTBTagBus       10:0
+`define BTBTagRange     17:7

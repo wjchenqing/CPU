@@ -1,5 +1,6 @@
 // RISCV32I CPU top module
 // port modification allowed for debugging purposes
+`include "defines.v"
 
 module cpu(
     input  wire                 clk_in,			// system clock signal
@@ -38,6 +39,7 @@ module cpu(
     // Link ex to ps_reg
     wire                branch_flag_ex_out;
     wire [`InstAddrBus] branch_target_addr_ex_out;
+    wire[`InstAddrBus ] branch_pc_ex_to_pcreg;
 
     // Link if to if_id.
     wire[`InstAddrBus ] pc_if_to_ifid;
@@ -153,7 +155,9 @@ module cpu(
         .pc_out(pc),
         .stall(stall_info),
         .branch_flag_in(branch_flag_ex_out),
-        .branch_target_addr_in(branch_target_addr_ex_out)
+        .branch_target_addr_in(branch_target_addr_ex_out),
+        .branch_pc_in(branch_pc_ex_to_pcreg),
+        .incorrect(iccorect)
     );
 
     If IF(
@@ -166,7 +170,7 @@ module cpu(
         .inst_in(inst_memctrl_to_if),
         .busy_in(busy_memctrl_to_if_and_mem),
         .inst_done_in(inst_done_memctrl_to_if),
-        .branch_flag_in(branch_flag_ex_out),
+        .branch_flag_in(iccorect),
         .branch_target_addr_in(branch_target_addr_ex_out),
         .stall_req_from_if(stall_req_if_to_ctrl),
         .if_pc_out(pc_if_to_ifid),
@@ -259,7 +263,8 @@ module cpu(
         .stallreq_from_ex(stallreq_from_ex),
         .branch_flag_out(branch_flag_ex_out),
         .branch_target_addr_out(branch_target_addr_ex_out),
-        .rd_val_from_mem(rd_val_mem_to_memwb)
+        .rd_val_from_mem(rd_val_mem_to_memwb),
+        .branch_pc_out(branch_pc_ex_to_pcreg)
     );
 
     ex_mem EX_MEM(

@@ -8,6 +8,7 @@ module pc_reg(
 
     input   wire                branch_flag_in,
     input   wire[`InstAddrBus ]   branch_target_addr_in,
+    input   wire[`InstAddrBus ] branch_pc_in,
 
     output  reg[`InstAddrBus]   pc_out,
     output  wire                 incorrect
@@ -18,31 +19,42 @@ module pc_reg(
     reg[1:0]            btb_predictor[`BTBNum - 1 : 0];
 
     assign incorrect = (branch_flag_in == `Branch)
-        & !((btb_tag[branch_target_addr_in[`BTBAddrRange]] == branch_target_addr_in[`BTBTagRange])
-        & (btb_target[branch_target_addr_in[`BTBAddrRange]] == branch_target_addr_in));
+        & !((((btb_predictor[branch_pc_in[`BTBAddrRange]][1]==`False_v) | btb_tag[branch_pc_in[`BTBAddrRange]] != branch_pc_in[`BTBTagRange])
+        & (branch_target_addr_in == (branch_pc_in + `PCstep)))
+        |((btb_tag[branch_pc_in[`BTBAddrRange]] == branch_pc_in[`BTBTagRange])
+        & (btb_target[branch_pc_in[`BTBAddrRange]] == branch_pc_in)
+        & (btb_predictor[branch_pc_in[`BTBAddrRange]][1]==`True_v )));
+
+    reg [5:0] i;
+    initial begin
+        for (i = 0; i < `BTBNum ; i=i+1) begin
+            btb_target[i] <= `ZeroWord ;
+            btb_tag[i] <= -1;
+            btb_predictor[i] <= 0;
+        end
+    end
 
     always @ (posedge clk_in) begin
         if (rst_in == `RstEnable) begin
             pc_out <= `ZeroWord;
-            for (i = 0; i < `BTBNum ; i=i+1) begin
-                btb_target <= `ZeroWord ;
-                btb_tag <= -1;
-            end
         end else if (branch_flag_in == `Branch ) begin
-            if ((btb_tag[branch_target_addr_in[`BTBAddrRange]] == branch_target_addr_in[`BTBTagRange]) &&
-            (btb_target[branch_target_addr_in[`BTBAddrRange]] == branch_target_addr_in)) begin
-                btb_predictor[branch_target_addr_in[`BTBAddrRange]]
-                    <= (btb_predictor[branch_target_addr_in[`BTBAddrRange]] == 2'b11
+            if (incorrect == `False_v ) begin
+                btb_tag[branch_pc_in[`BTBAddrRange]] <= branch_pc_in[`BTBTagRange];
+                btb_target[branch_pc_in[`BTBAddrRange]] <= branch_target_addr_in;
+                btb_predictor[branch_pc_in[`BTBAddrRange]]
+                    <= (btb_predictor[branch_pc_in[`BTBAddrRange]] == 2'b11
                         ? 2'b11
-                        : btb_predictor[branch_target_addr_in[`BTBAddrRange]] + 2'b01);
-                pc_out <= pc_out + 4;
+                        : btb_predictor[branch_pc_in[`BTBAddrRange]] + 2'b01);
+                if (stall[0] == `NotStop) begin
+                    pc_out <= pc_out + 4'h4;
+                end
             end else begin
-                btb_tag[branch_target_addr_in[`BTBAddrRange]] <= branch_target_addr_in[`BTBTagRange];
-                btb_target[branch_target_addr_in[`BTBAddrRange]] <= branch_target_addr_in;
-                btb_predictor[branch_target_addr_in[`BTBAddrRange]]
-                    <= (btb_predictor[branch_target_addr_in[`BTBAddrRange]] == 2'b00
+                btb_tag[branch_pc_in[`BTBAddrRange]] <= branch_pc_in[`BTBTagRange];
+                btb_target[branch_pc_in[`BTBAddrRange]] <= branch_target_addr_in;
+                btb_predictor[branch_pc_in[`BTBAddrRange]]
+                    <= (btb_predictor[branch_pc_in[`BTBAddrRange]] == 2'b00
                     ? 2'b00
-                    : btb_predictor[branch_target_addr_in[`BTBAddrRange]] - 2'b01);
+                    : btb_predictor[branch_pc_in[`BTBAddrRange]] - 2'b01);
                 pc_out <= branch_target_addr_in;
             end
         end else if ((stall[0] == `NotStop)

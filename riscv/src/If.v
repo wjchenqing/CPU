@@ -82,7 +82,7 @@ module If(
         if (rst_in == `RstEnable) begin
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
-        end else if (branch_flag_in == `Branch || cache_done == `False_v ) begin
+        end else if (branch_flag_in == `True_v  || cache_done == `False_v ) begin
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
         end else if (cache_done == `True_v) begin

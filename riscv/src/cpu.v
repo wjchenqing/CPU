@@ -42,6 +42,7 @@ module cpu(
     wire [`InstAddrBus] branch_target_addr_ex_out;
     wire[`InstAddrBus ] branch_pc_ex_to_pcreg;
     wire                branch_taken_ex_to_pc;
+    wire                is_jalr_ex_to_pc;
 
     // Link if to if_id.
     wire[`InstAddrBus ] pc_if_to_ifid;
@@ -165,7 +166,8 @@ module cpu(
         .branch_pc_in(branch_pc_ex_to_pcreg),
         .incorrect(iccorect),
         .branch_taken(branch_taken_ex_to_pc),
-        .pre_to_take(pre_to_take_pc_to_if)
+        .pre_to_take(pre_to_take_pc_to_if),
+        .is_jalr(is_jalr_ex_to_pc)
     );
 
     If IF(
@@ -282,7 +284,8 @@ module cpu(
         .rd_val_from_mem(rd_val_mem_to_memwb),
         .branch_pc_out(branch_pc_ex_to_pcreg),
         .pre_to_take(pre_to_take_idex_to_ex),
-        .branch_taken(branch_taken_ex_to_pc)
+        .branch_taken(branch_taken_ex_to_pc),
+        .is_jalr(is_jalr_ex_to_pc)
     );
 
     ex_mem EX_MEM(

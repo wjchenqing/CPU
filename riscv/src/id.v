@@ -300,7 +300,7 @@ module id(
     reg stalleq1, stalleq2;
 
     always @ (*) begin
-        if ((rst_in == `RstEnable) || (rs1_read_out == `ReadDisable)) begin
+        if ((rst_in == `RstEnable) || (rs1_read_out == `ReadDisable) || (rs1_addr_out == 0)) begin
             rs1_val_out <= `ZeroWord ;
             stalleq1 <= `NotStop ;
         end else if ((ex_is_loading == `Loading) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs1_addr_out)) begin
@@ -319,7 +319,7 @@ module id(
     end
 
     always @ (*) begin
-        if ((rst_in == `RstEnable) || (rs2_read_out == `ReadDisable)) begin
+        if ((rst_in == `RstEnable) || (rs2_read_out == `ReadDisable) || (rs2_addr_out == 0)) begin
             rs2_val_out <= `ZeroWord ;
             stalleq2 <= `NotStop ;
         end else if ((ex_is_loading == `Loading) && (ex_wreg_in == 1'b1) && (ex_waddr_in == rs2_addr_out)) begin

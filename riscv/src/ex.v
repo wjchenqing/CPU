@@ -30,6 +30,7 @@ module ex(
     output  reg                 branch_flag_out,
     output  reg[`InstAddrBus  ]   branch_target_addr_out,
     output  reg[`InstAddrBus ]  branch_pc_out,
+    output  reg                 is_jalr,
 
     output  reg                stallreq_from_ex,
 
@@ -67,6 +68,7 @@ module ex(
             stallreq_from_ex <= `NotStop ;
             branch_pc_out <= pc_in ;
             branch_taken <= `False_v;
+            is_jalr <= `False_v;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin
@@ -129,9 +131,10 @@ module ex(
                 end
                 `JALR: begin
                     branch_taken <= `True_v;
+                    is_jalr <= `True_v;
                     if (pre_to_take) begin
-                        branch_flag_out <= `NotBranch;
-                        branch_target_addr_out <= `ZeroWord;
+                        branch_flag_out <= `Branch;
+                        branch_target_addr_out <= (rs1_val_in + imm_in) & 32'hFFFFFFFE;
                         rd_val_out <= pc_in + `PCstep;
                         branch_pc_out <= pc_in;
                     end else begin

@@ -51,7 +51,7 @@ module id_ex(
                 imm_ex_out <= `ZeroWord ;
                 pc_ex_out <= `ZeroWord ;
                 ex_loading <= `False_v ;
-                pre_to_take_out <= False_v;
+                pre_to_take_out <= `False_v;
             end else if (stall[2] == `Stop) begin
 
             end else if (branch_flag_in == `Branch) begin

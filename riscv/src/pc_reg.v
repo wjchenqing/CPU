@@ -9,60 +9,57 @@ module pc_reg(
     input   wire                branch_flag_in,
     input   wire[`InstAddrBus ]   branch_target_addr_in,
     input   wire[`InstAddrBus ] branch_pc_in,
+    input   wire                branch_taken,
 
     output  reg[`InstAddrBus]   pc_out,
-    output  wire                 incorrect
+    output  wire                incorrect,
+    output  reg                 pre_to_take
 );
 
     reg[`InstBus]       btb_target[`BTBNum - 1 : 0];
     reg[`BTBTagBus ]    btb_tag[`BTBNum - 1 : 0];
-    reg[1:0]            btb_predictor[`BTBNum - 1 : 0];
+    reg[`InstAddrBus]   next_pc;
 
-    assign incorrect = (branch_flag_in == `Branch)
-        & !((((btb_predictor[branch_pc_in[`BTBAddrRange]][1]==`False_v) | btb_tag[branch_pc_in[`BTBAddrRange]] != branch_pc_in[`BTBTagRange])
-        & (branch_target_addr_in == (branch_pc_in + `PCstep)))
-        |((btb_tag[branch_pc_in[`BTBAddrRange]] == branch_pc_in[`BTBTagRange])
-        & (btb_target[branch_pc_in[`BTBAddrRange]] == branch_pc_in)
-        & (btb_predictor[branch_pc_in[`BTBAddrRange]][1]==`True_v )));
+    assign incorrect = branch_flag_in == `Branch;
 
     reg [5:0] i;
     initial begin
         for (i = 0; i < `BTBNum ; i=i+1) begin
             btb_target[i] <= `ZeroWord ;
             btb_tag[i] <= -1;
-            btb_predictor[i] <= 0;
         end
     end
 
     always @ (posedge clk_in) begin
         if (rst_in == `RstEnable) begin
             pc_out <= `ZeroWord;
+            pre_to_take <= `False_v;
+            next_pc <= 4'h4;
         end else if (branch_flag_in == `Branch ) begin
-            if (incorrect == `False_v ) begin
-                btb_tag[branch_pc_in[`BTBAddrRange]] <= branch_pc_in[`BTBTagRange];
-                btb_target[branch_pc_in[`BTBAddrRange]] <= branch_target_addr_in;
-                btb_predictor[branch_pc_in[`BTBAddrRange]]
-                    <= (btb_predictor[branch_pc_in[`BTBAddrRange]] == 2'b11
-                        ? 2'b11
-                        : btb_predictor[branch_pc_in[`BTBAddrRange]] + 2'b01);
-                if (stall[0] == `NotStop) begin
-                    pc_out <= pc_out + 4'h4;
-                end
+            pc_out <= branch_target_addr_in;
+            if (btb_tag[branch_target_addr_in[`BTBAddrRange]] == branch_target_addr_in[`BTBTagRange]) begin
+                next_pc = btb_target[branch_target_addr_in[`BTBAddrRange]];
+                pre_to_take = `True_v;
             end else begin
-                btb_tag[branch_pc_in[`BTBAddrRange]] <= branch_pc_in[`BTBTagRange];
-                btb_target[branch_pc_in[`BTBAddrRange]] <= branch_target_addr_in;
-                btb_predictor[branch_pc_in[`BTBAddrRange]]
-                    <= (btb_predictor[branch_pc_in[`BTBAddrRange]] == 2'b00
-                    ? 2'b00
-                    : btb_predictor[branch_pc_in[`BTBAddrRange]] - 2'b01);
-                pc_out <= branch_target_addr_in;
+                next_pc = branch_target_addr_in + 4'h4;
+                pre_to_take = `False_v; 
+            end
+            if (branch_taken == `True_v) begin
+                btb_tag[branch_pc_in[`BTBAddrRange]] = branch_pc_in[`BTBTagRange];
+                btb_target[branch_pc_in[`BTBAddrRange]] = branch_target_addr_in;
+            end else begin
+                btb_tag[branch_pc_in[`BTBAddrRange]] = -1;
+                btb_target[branch_pc_in[`BTBAddrRange]] = `ZeroWord;
             end
         end else if ((stall[0] == `NotStop)
-            && (btb_tag[pc_out[`BTBAddrRange]] == pc_out[`BTBTagRange])
-            && (btb_predictor[pc_out[`BTBAddrRange]][1]==`True_v )) begin
-            pc_out <= btb_target[pc_out[`BTBAddrRange]];
+            && (btb_tag[next_pc[`BTBAddrRange]] == next_pc[`BTBTagRange])) begin
+            next_pc <= btb_target[pc_out[`BTBAddrRange]];
+            pc <= next_pc;
+            pre_to_take <= `True_v;
         end else if (stall[0] == `NotStop) begin
-            pc_out <= pc_out + 4'h4;
+            pc_out <= next_pc;
+            next_pc <= next_pc+4'h4;
+            pre_to_take <= `False_v;
         end
     end
 

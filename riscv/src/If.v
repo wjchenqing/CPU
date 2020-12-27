@@ -7,6 +7,10 @@ module If(
 
     input   wire[`InstAddrBus]        pc,
 
+    input   wire                pre_to_take_in,
+
+    output  reg                 pre_to_take_out,
+
     output  reg                if_req_out,
     output  reg[`InstAddrBus]  inst_addr_out,
 
@@ -82,15 +86,19 @@ module If(
         if (rst_in == `RstEnable) begin
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
+            pre_to_take_out <= `False_v;
         end else if (branch_flag_in == `True_v  || cache_done == `False_v ) begin
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
+            pre_to_take_out <= `False_v;
         end else if (cache_done == `True_v) begin
             if_pc_out <= pc;
             if_inst_out <= cache_inst;
+            pre_to_take_out <= pre_to_take_in;
         end else begin
             if_pc_out <= `ZeroWord ;
             if_inst_out <= `ZeroWord ;
+            pre_to_take_out <= `False_v;
         end
     end
 

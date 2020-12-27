@@ -12,6 +12,8 @@ module ex(
     input   wire[`InstAddrBus]  pc_in,
     input   wire                is_loading_in,
 
+    input   wire                pre_to_take,
+
     input   wire[`RegBus ]      rd_val_from_mem,
 
     output  reg                 rd_out,
@@ -24,6 +26,7 @@ module ex(
     output  reg[`InstAddrBus]   mem_addr_out,
     output  reg[`RegBus]        mem_val_out,
 
+    output  reg                 branch_taken,
     output  reg                 branch_flag_out,
     output  reg[`InstAddrBus  ]   branch_target_addr_out,
     output  reg[`InstAddrBus ]  branch_pc_out,
@@ -48,6 +51,7 @@ module ex(
             ex_is_loading_out <= 1'b0;
             stallreq_from_ex <= `NotStop ;
             branch_pc_out <= `ZeroWord ;
+            branch_taken <= `False_v;
         end else begin
             ex_is_loading_out <= is_loading_in;
             rd_out <= rd_in;
@@ -62,6 +66,7 @@ module ex(
             branch_target_addr_out <= `ZeroWord ;
             stallreq_from_ex <= `NotStop ;
             branch_pc_out <= pc_in ;
+            branch_taken <= `False_v;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin
@@ -109,87 +114,187 @@ module ex(
                 `LUI: rd_val_out <= imm_in;
                 `AUIPC: rd_val_out <= imm_in + pc_in;
                 `JAL: begin
-                    branch_flag_out <= `Branch ;
-                    branch_target_addr_out <= pc_in + imm_in;
-                    rd_val_out <= pc_in + `PCstep ;
-                    branch_pc_out <= pc_in;
+                    branch_taken <= `True_v;
+                    if (pre_to_take) begin
+                        branch_flag_out <= `NotBranch;
+                        branch_target_addr_out <= `ZeroWord;
+                        rd_val_out <= pc_in + `PCstep;
+                        branch_pc_out <= pc_in;
+                    end else begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= pc_in + imm_in;
+                        rd_val_out <= pc_in + `PCstep ;
+                        branch_pc_out <= pc_in;
+                    end
                 end
                 `JALR: begin
-                    branch_flag_out <= `Branch ;
-                    branch_target_addr_out <= (rs1_val_in + imm_in) & 32'hFFFFFFFE;
-                    rd_val_out <= pc_in + `PCstep ;
-                    branch_pc_out <= pc_in;
+                    branch_taken <= `True_v;
+                    if (pre_to_take) begin
+                        branch_flag_out <= `NotBranch;
+                        branch_target_addr_out <= `ZeroWord;
+                        rd_val_out <= pc_in + `PCstep;
+                        branch_pc_out <= pc_in;
+                    end else begin
+                        branch_flag_out <= `Branch ;
+                        branch_target_addr_out <= (rs1_val_in + imm_in) & 32'hFFFFFFFE;
+                        rd_val_out <= pc_in + `PCstep ;
+                        branch_pc_out <= pc_in;
+                    end
                 end
                 `BEQ: begin
                     rd_val_out <= `ZeroWord ;
                     if (rs1_val_in == rs2_val_in) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `BNE: begin
                     rd_val_out <= `ZeroWord ;
                     if (rs1_val_in != rs2_val_in) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `BLT: begin
                     rd_val_out <= `ZeroWord ;
                     if ($signed(rs1_val_in) < $signed(rs2_val_in)) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `BGE: begin
                     rd_val_out <= `ZeroWord ;
                     if ($signed(rs1_val_in) >= $signed(rs2_val_in)) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `BLTU: begin
                     rd_val_out <= `ZeroWord ;
                     if (rs1_val_in < rs2_val_in) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `BGEU: begin
                     rd_val_out <= `ZeroWord ;
                     if (rs1_val_in >= rs2_val_in) begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + imm_in;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `True_v;
+                        if (pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + imm_in;
+                            branch_pc_out <= pc_in;
+                        end
                     end else begin
-                        branch_flag_out <= `Branch ;
-                        branch_target_addr_out <= pc_in + 4'h4 ;
-                        branch_pc_out <= pc_in;
+                        branch_taken <= `False_v;
+                        if (!pre_to_take) begin
+                            branch_flag_out <= `NotBranch;
+                            branch_target_addr_out <= `ZeroWord;
+                            branch_pc_out <= pc_in;
+                        end else begin
+                            branch_flag_out <= `Branch ;
+                            branch_target_addr_out <= pc_in + 4'h4 ;
+                            branch_pc_out <= pc_in;
+                        end
                     end
                 end
                 `LB: begin

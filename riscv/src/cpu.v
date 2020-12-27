@@ -35,15 +35,18 @@ module cpu(
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;
     wire                iccorect;
+    wire                pre_to_take_pc_to_if;
 
     // Link ex to ps_reg
     wire                branch_flag_ex_out;
     wire [`InstAddrBus] branch_target_addr_ex_out;
     wire[`InstAddrBus ] branch_pc_ex_to_pcreg;
+    wire                branch_taken_ex_to_pc;
 
     // Link if to if_id.
     wire[`InstAddrBus ] pc_if_to_ifid;
     wire[`InstBus ]     inst_if_to_ifid;
+    wire                pre_to_take_if_to_ifid;
 
     // Link if to ctrl.
     wire                stall_req_if_to_ctrl;
@@ -60,6 +63,7 @@ module cpu(
     // Link if_id to id.
     wire [`InstAddrBus] pc_ifid_to_id;
     wire [`InstBus]     inst_ifid_to_id;
+    wire                pre_to_take_ifid_to_id;
 
     // Link regfile to id.
     wire [`RegBus] rs1_data_regfile_to_id;
@@ -80,6 +84,7 @@ module cpu(
     wire [`RegBus ]     imm_id_to_idex;
     wire [`InstAddrBus] pc_id_to_idex;
     wire                loading_id_to_idex;
+    wire                pre_to_take_id_to_idex;
 
     // Link id_ex to ex.
     wire [`RegBus ]         rs1_val_idex_to_ex;
@@ -90,6 +95,7 @@ module cpu(
     wire [`RegBus ]         imm_idex_to_ex;
     wire [`InstAddrBus ]    pc_idex_to_ex;
     wire                    loading_idex_to_ex;
+    wire                    pre_to_take_idex_to_ex;
 
     // Link ex to ex_mem, forwarding to id
     wire                    rd_ex_to_exmem;
@@ -157,7 +163,9 @@ module cpu(
         .branch_flag_in(branch_flag_ex_out),
         .branch_target_addr_in(branch_target_addr_ex_out),
         .branch_pc_in(branch_pc_ex_to_pcreg),
-        .incorrect(iccorect)
+        .incorrect(iccorect),
+        .branch_taken(branch_taken_ex_to_pc),
+        .pre_to_take(pre_to_take_pc_to_if)
     );
 
     If IF(
@@ -174,7 +182,9 @@ module cpu(
         .branch_target_addr_in(branch_target_addr_ex_out),
         .stall_req_from_if(stall_req_if_to_ctrl),
         .if_pc_out(pc_if_to_ifid),
-        .if_inst_out(inst_if_to_ifid)
+        .if_inst_out(inst_if_to_ifid),
+        .pre_to_take_in(pre_to_take_pc_to_if),
+        .pre_to_take_out(pre_to_take_if_to_ifid)
     );
 
     if_id IF_ID(
@@ -186,7 +196,9 @@ module cpu(
         .if_inst(inst_if_to_ifid),
         .id_pc(pc_ifid_to_id),
         .id_inst(inst_ifid_to_id),
-        .stall(stall_info)
+        .stall(stall_info),
+        .pre_to_take_in(pre_to_take_if_to_ifid),
+        .pre_to_take_out(pre_to_take_ifid_to_id)
     );
 
     id ID(
@@ -214,7 +226,9 @@ module cpu(
         .imm_val_out(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
         .stalleq_from_id(stallreq_from_id),
-        .is_loading_out(loading_id_to_idex)
+        .is_loading_out(loading_id_to_idex),
+        .pre_to_take_in(pre_to_take_ifid_to_id),
+        .pre_to_take_out(pre_to_take_id_to_idex)
     );
 
     id_ex ID_EX(
@@ -238,7 +252,9 @@ module cpu(
         .pc_ex_out(pc_idex_to_ex),
         .stall(stall_info),
         .id_loading(loading_id_to_idex),
-        .ex_loading(loading_idex_to_ex)
+        .ex_loading(loading_idex_to_ex),
+        .pre_to_take_in(pre_to_take_id_to_idex),
+        .pre_to_take_out(pre_to_take_idex_to_ex)
     );
 
     ex EX(
@@ -264,7 +280,9 @@ module cpu(
         .branch_flag_out(branch_flag_ex_out),
         .branch_target_addr_out(branch_target_addr_ex_out),
         .rd_val_from_mem(rd_val_mem_to_memwb),
-        .branch_pc_out(branch_pc_ex_to_pcreg)
+        .branch_pc_out(branch_pc_ex_to_pcreg),
+        .pre_to_take(pre_to_take_idex_to_ex),
+        .branch_taken(branch_taken_ex_to_pc)
     );
 
     ex_mem EX_MEM(

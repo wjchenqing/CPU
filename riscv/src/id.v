@@ -4,6 +4,7 @@ module id(
     input   wire                rst_in,
     input   wire[`InstAddrBus]  pc_in,
     input   wire[`InstBus]      inst_in,
+    input   wire                pre_to_take_in,
 
     //forwarding from ex.
     input   wire                ex_is_loading,
@@ -35,6 +36,7 @@ module id(
     output  reg[`InstAddrBus]   pc_out,
     output  reg[`RegBus]        imm_val_out,
     output  reg                 is_loading_out,
+    output  reg                 pre_to_take_out,
 
     //stall ctrl
     output  wire                stalleq_from_id
@@ -60,8 +62,10 @@ module id(
             imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
             is_loading_out <= `NotLoading;
+            pre_to_take_out <= `False_v;
         end else begin
             inst_type_out <= `NOPInstType;
+            pre_to_take_out <= pre_to_take_in;
             case (opcode)
                 `opRI: begin
                     rs1_read_out <= `ReadEnable;

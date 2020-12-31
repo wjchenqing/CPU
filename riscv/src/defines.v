@@ -156,5 +156,5 @@
 //----------DCACHE------------
 `define DCacheNum       256
 `define DCacheAddrRange 9:2
-`define DTabgBus        7:0
+`define DTagBus        7:0
 `define DTagRange       17:10

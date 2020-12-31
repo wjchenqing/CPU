@@ -3,6 +3,7 @@
 module mem(
     input   wire        rst_in,
     input   wire        clk_in,
+    input   wire        rdy,
 
     //from mem_ctrl.
     input   wire                mem_done_in,
@@ -63,8 +64,8 @@ module mem(
             cache_changed <= `False_v;
             cache_addr <= `ZeroWord;
             cache_val <= `ZeroWord;
-        end else if (load_in == True_v) begin
-            if (cache_tag[mem_addr_in[`DCacheAddrRange]] == mem_addr_in[`DTagRabge]) begin
+        end else if (load_in == `True_v) begin
+            if (cache_tag[mem_addr_in[`DCacheAddrRange]] == mem_addr_in[`DTagRange]) begin
                 cache_done <= `True_v;
                 cache_changed <= `False_v;
                 cache_addr <= mem_addr_in;
@@ -129,7 +130,11 @@ module mem(
                 stall_req_from_mem <= `False_v ;
                 store_len <= 2'b0;
                 cache_done <= `True_v;
-                cache_changed <= `True_v;
+                if(inst_type_in == `SW) begin
+                    cache_changed <= `True_v;
+                end else begin
+                    cache_changed <= `False_v;
+                end
                 cache_addr <= mem_addr_in;
                 cache_val <= mem_val_in;
             end else begin

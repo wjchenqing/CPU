@@ -142,13 +142,19 @@
 `define InstBus         31:0
 
 //---------ICACHE-------------
-`define ICacheNum       128
-`define CacheAddrRange  8:2
-`define TagBus          8:0
-`define TagRange        17:9
+`define ICacheNum       256
+`define CacheAddrRange  9:2
+`define TagBus          7:0
+`define TagRange        17:10
 
 //------------BTB------------
 `define BTBNum          32
 `define BTBAddrRange    6:2
 `define BTBTagBus       10:0
 `define BTBTagRange     17:7
+
+//----------DCACHE------------
+`define DCacheNum       256
+`define DCacheAddrRange 9:2
+`define DTabgBus        7:0
+`define DTagRange       17:10

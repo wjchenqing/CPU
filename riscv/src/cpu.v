@@ -313,6 +313,7 @@ module cpu(
 
     mem MEM(
         .rst_in(rst_in),
+        .clk_in(clk_in),
         .mem_done_in(mem_done_memctrl_to_mem),
         .mem_val_read_in(mem_val_read_memctrl_to_mem),
         .memctrl_busy_in(busy_memctrl_to_if_and_mem),

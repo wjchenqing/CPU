@@ -30,7 +30,7 @@ module cpu(
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
     wire rdy;
-    assign rdy = rdy_in & (!io_buffer_full);
+    assign rdy = rdy_in & (io_buffer_full == 1'b0);
 
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;

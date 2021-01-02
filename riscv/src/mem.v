@@ -52,6 +52,9 @@ module mem(
     reg                 cache_done;
     reg                 cache_changed;
 
+    wire [`RegBus]      val;
+    assign val = cache_data[mem_addr_in[`DCacheAddrRange]];
+
     always @ (*) begin
         if (rst_in == `RstEnable) begin
             read_req_out <= `False_v;
@@ -69,7 +72,38 @@ module mem(
                 cache_done <= `True_v;
                 cache_changed <= `False_v;
                 cache_addr <= mem_addr_in;
-                cache_val <= cache_data[mem_addr_in[`DCacheAddrRange]];
+                //cache_val <= cache_data[mem_addr_in[`DCacheAddrRange]];
+                case (inst_type_in)
+                    `LW : cache_val <= val;
+                    `LH : begin
+                        case (mem_addr_in[1:0])
+                            2'b00:   cache_val <= {16'b0,val[15:0]};
+                            default: cache_val <= {16'b0,val[31:16]};
+                        endcase
+                    end
+                    `LHU: begin
+                        case (mem_addr_in[1:0])
+                            2'b00:   cache_val <= {16'b0,val[15:0]};
+                            default: cache_val <= {16'b0,val[31:16]};
+                        endcase
+                    end
+                    `LB : begin
+                        case (mem_addr_in[1:0])
+                            2'b00:   cache_val <= {24'b0,val[7:0]};
+                            2'b01:   cache_val <= {24'b0,val[15:8]};
+                            2'b10:   cache_val <= {24'b0,val[23:16]};
+                            default: cache_val <= {24'b0,val[31:24]};
+                        endcase
+                    end
+                    `LBU: begin
+                        case (mem_addr_in[1:0])
+                            2'b00:   cache_val <= {24'b0,val[7:0]};
+                            2'b01:   cache_val <= {24'b0,val[15:8]};
+                            2'b10:   cache_val <= {24'b0,val[23:16]};
+                            default: cache_val <= {24'b0,val[31:24]};
+                        endcase
+                    end
+                endcase
                 read_req_out <= `False_v;
                 write_req_out <= `False_v ;
                 mem_addr_out <= `ZeroWord ;
@@ -212,7 +246,7 @@ module mem(
     end
 
     always @ (posedge clk_in) begin
-        if (rdy && (rst_in == `RstDisable) && (cache_changed == `True_v )) begin
+        if ((rdy==1'b1) && (rst_in == `RstDisable) && (cache_changed == `True_v )) begin
             cache_tag[cache_addr[`CacheAddrRange]] <= cache_addr[`TagRange];
             cache_data[cache_addr[`CacheAddrRange]] <= cache_val;
         end

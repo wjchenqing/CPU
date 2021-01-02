@@ -29,8 +29,19 @@ module cpu(
 // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
+    reg     special;
+    always @ (posedge clk_in) begin
+        if (rst_in == `RstEnable) begin
+            special <= 1'b1;
+        end else if (special == 1'b0) begin
+            special <= 1'b1;
+        end else if (mem_wr == 1'b1 && mem_a == 32'h00030000) begin
+            special <= 1'b0;
+        end
+    end
+
     wire rdy;
-    assign rdy = rdy_in & (io_buffer_full == 1'b0);
+    assign rdy = rdy_in & (io_buffer_full == 1'b0) & special;
 
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;

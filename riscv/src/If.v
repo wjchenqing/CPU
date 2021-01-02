@@ -27,8 +27,10 @@ module If(
     output  reg[`InstBus ]     if_inst_out
 );
 
-    reg[`InstBus ]      cache_data[`ICacheNum - 1 : 0];
-    reg[`TagBus ]       cache_tag [`ICacheNum - 1 : 0];
+    reg[`InstBus ]          cache_data[`ICacheNum - 1 : 0];
+    reg[`TagBus ]           cache_tag [`ICacheNum - 1 : 0];
+    reg[`ICacheNum - 1 : 0] cache_valid;
+
 
     reg[31:0] i;
 
@@ -41,7 +43,7 @@ module If(
             cache_data[i] = `ZeroWord ;
         end
     end
-    
+
     always @ (*) begin
         if (rst_in == `RstEnable ) begin
             if_req_out <= `False_v ;
@@ -49,7 +51,7 @@ module If(
             stall_req_from_if <= `NotStop ;
             cache_done <= `False_v ;
             cache_inst <= `ZeroWord ;
-        end else if (cache_tag[pc[`CacheAddrRange]] == pc[`TagRange]) begin
+        end else if (cache_valid[pc[`CacheAddrRange]] && cache_tag[pc[`CacheAddrRange]] == pc[`TagRange]) begin
             if_req_out <= `False_v ;
             inst_addr_out <= `ZeroWord ;
             stall_req_from_if <= `NotStop ;
@@ -103,10 +105,19 @@ module If(
     end
 
     always @ (posedge clk_in) begin
-        if (rdy && (rst_in == `RstDisable) && (cache_done == `True_v )) begin
+        // if (rdy && (rst_in == `RstDisable) && (cache_done == `True_v )) begin
+        /*
+        if ((rst_in == `RstDisable) && (cache_done == `True_v )) begin
             cache_tag[pc[`CacheAddrRange]] <= pc[`TagRange];
             cache_data[pc[`CacheAddrRange]] <= cache_inst;
         end
-
+         */
+        if (rst_in == `RstEnable) begin
+            cache_valid <= 0;
+        end else if (cache_done == `True_v) begin
+            cache_tag[pc[`CacheAddrRange]] <= pc[`TagRange];
+            cache_data[pc[`CacheAddrRange]] <= cache_inst;
+            cache_valid[pc[`CacheAddrRange]] <= 1;
+        end
     end
 endmodule : If

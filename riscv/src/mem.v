@@ -38,6 +38,7 @@ module mem(
 
     reg [`RegBus]   cache_data[`DCacheNum - 1 : 0];
     reg [`DTagBus]  cache_tag [`DCacheNum - 1 : 0];
+    reg[`DCacheNum - 1 : 0] cache_valid;
 
     reg [32:0] i ;
     initial begin
@@ -68,7 +69,7 @@ module mem(
             cache_addr <= `ZeroWord;
             cache_val <= `ZeroWord;
         end else if (load_in == `True_v) begin
-            if (cache_tag[mem_addr_in[`DCacheAddrRange]] == mem_addr_in[`DTagRange]) begin
+            if (cache_valid[mem_addr_in[`DCacheAddrRange]] && cache_tag[mem_addr_in[`DCacheAddrRange]] == mem_addr_in[`DTagRange]) begin
                 cache_done <= `True_v;
                 cache_changed <= `False_v;
                 cache_addr <= mem_addr_in;
@@ -246,9 +247,12 @@ module mem(
     end
 
     always @ (posedge clk_in) begin
-        if ((rdy==1'b1) && (rst_in == `RstDisable) && (cache_changed == `True_v )) begin
+        if (rst_in == `RstEnable) begin
+            cache_valid <= 0;
+        end else if (cache_changed == `True_v) begin
             cache_tag[cache_addr[`CacheAddrRange]] <= cache_addr[`TagRange];
             cache_data[cache_addr[`CacheAddrRange]] <= cache_val;
+            cache_valid[cache_addr[`CacheAddrRange]] <= 1;
         end
     end
 

@@ -30,7 +30,8 @@ module regfile(
         if (rst_in==`ReadEnable ) begin
             for (i = 0; i < 32; i = i + 1)
                 regs[i] <= 0;
-        end else if (rdy_in == 1'b1 && rst_in == `RstDisable) begin
+        // end else if (rdy_in == 1'b1 && rst_in == `RstDisable) begin
+        end else begin
             if ((we == `WriteEnable) && (waddr != `RegNumLog2'h0)) begin
                 regs[waddr] <= wdata;
             end

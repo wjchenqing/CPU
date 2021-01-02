@@ -35,6 +35,7 @@ module id(
     output  reg[`InstAddrBus]   pc_out,
     output  reg[`RegBus]        imm_val_out,
     output  reg                 is_loading_out,
+    output  reg[`CSRAddrBus]    csr_addr,
 
     //stall ctrl
     output  wire                stalleq_from_id
@@ -60,6 +61,7 @@ module id(
             imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
             is_loading_out <= `NotLoading;
+            csr_addr <= `12'b0;
         end else begin
             inst_type_out <= `NOPInstType;
             case (opcode)
@@ -72,7 +74,7 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     is_loading_out <= `NotLoading ;
-
+                    csr_addr <= `12'b0;
                     case (func3)
                         `f3ADDI: begin
                             inst_type_out <= `ADDI;
@@ -111,6 +113,10 @@ module id(
                                 imm <= {{27'b0},inst_in[24:20]};
                             end
                         end
+                        default: begin
+                            inst_type_out <= `NOPInstType;
+                            imm <= `ZeroWord;
+                        end
                     endcase
                 end
                 `opRR: begin
@@ -123,6 +129,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= `ZeroWord;
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
 
                     case (func3)
                         `f3ADD_SUB: begin
@@ -157,6 +164,9 @@ module id(
                         `f3AND: begin
                             inst_type_out <= `AND;
                         end
+                        default: begin
+                            inst_type_out <= `NOPInstType;
+                        end
                     endcase
                 end
                 `opBranch: begin
@@ -169,6 +179,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
 
                     case (func3)
                         `f3BEQ: begin
@@ -189,6 +200,9 @@ module id(
                         `f3BGEU: begin
                             inst_type_out <= `BGEU;
                         end
+                        `default: begin
+                            inst_type_out <= `NOPInstType;
+                        end
                     endcase
                 end
                 `opLoad: begin
@@ -201,6 +215,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     is_loading_out <= `Loading ;
+                    csr_addr <= `12'b0;
 
                     case (func3)
                         `f3LB: inst_type_out <= `LB;
@@ -208,6 +223,7 @@ module id(
                         `f3LW: inst_type_out <= `LW;
                         `f3LBU: inst_type_out <= `LBU;
                         `f3LHU: inst_type_out <= `LHU;
+                        default: inst_type_out <= `NOPInstType;
                     endcase
                 end
                 `opStore: begin
@@ -220,11 +236,13 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
 
                     case (func3)
                         `f3SB: inst_type_out <= `SB;
                         `f3SH: inst_type_out <= `SH;
                         `f3SW: inst_type_out <= `SW;
+                        default: inst_type_out <= `NOPInstType;
                     endcase
                 end
                 `opLUI: begin
@@ -238,6 +256,7 @@ module id(
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `LUI;
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
                 end
                 `opAUIPC: begin
                     rs1_read_out <= `ReadDisable;
@@ -250,6 +269,7 @@ module id(
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `AUIPC;
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
                 end
                 `opJAL: begin
                     rs1_read_out <= `ReadDisable;
@@ -262,6 +282,7 @@ module id(
                     imm <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
                     inst_type_out <= `JAL;
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
                 end
                 `opJALR: begin
                     rs1_read_out <= `ReadEnable;
@@ -274,6 +295,85 @@ module id(
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
                     is_loading_out <= `NotLoading ;
+                    csr_addr <= `12'b0;
+                end
+                `opCSR: begin
+                    rs2_read_out <= `ReadDisable;
+                    rs2_addr_out <= `NOPRegAdder;
+                    pc_out <= pc_in;
+                    is_loading_out <= `NotLoading;
+                    case (func3)
+                        `f3MRET: begin
+                            rs1_read_out <= `ReadDisable;
+                            rs1_addr_out <= `ZeroWord;
+                            rd_out <= `WriteEnable;
+                            rd_addr_out <= `NOPRegAdder;
+                            imm <= `ZeroWord;
+                        end
+                        `f3CSRRW: begin
+                            rs1_read_out <= `ReadEnable;
+                            rs1_addr_out <= inst_in[`rs1Range];
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRW;
+                            imm <= `ZeroWord;
+                            csr_addr <= inst_in[31:20];
+                        end
+                        `f3CSRRS: begin
+                            rs1_read_out <= `ReadEnable;
+                            rs1_addr_out <= inst_in[`rs1Range];
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRS;
+                            imm <= `ZeroWord;
+                            csr_addr <= inst_in[31:20];
+                        end
+                        `f3CSRRC: begin
+                            rs1_read_out <= `ReadEnable;
+                            rs1_addr_out <= inst_in[`rs1Range];
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRC;
+                            imm <= `ZeroWord;
+                            csr_addr <= inst_in[31:20];
+                        end
+                        `f3CSRRWI:begin
+                            rs1_read_out <= `ReadDisable;
+                            rs1_addr_out <= `NOPInstType;
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRWI;
+                            imm <= {28'b0, inst_in[`rs1Range]};
+                            csr_addr <= inst_in[31:20];
+                        end
+                        `f3CSRRSI:begin
+                            rs1_read_out <= `ReadDisable;
+                            rs1_addr_out <= `NOPInstType;
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRSI;
+                            imm <= {28'b0, inst_in[`rs1Range]};
+                            csr_addr <= inst_in[31:20];
+                        end
+                        `f3CSRRCI:begin
+                            rs1_read_out <= `ReadDisable;
+                            rs1_addr_out <= `NOPInstType;
+                            rd_out <= (inst_in[`rdRange] == 5'b0) ? `WriteDisable : `WriteEnable;
+                            rd_addr_out <= inst_in[`rdRange];   
+                            inst_type_out <= `CSRRCI;
+                            imm <= {28'b0, inst_in[`rs1Range]};
+                            csr_addr <= inst_in[31:20];
+                        end
+                        default : begin
+                            rs1_read_out <= `ReadDisable;
+                            rs1_addr_out <= `NOPRegAdder;
+                            rd_out <= `ZeroWord ;
+                            rd_addr_out <= `NOPRegAdder;
+                            inst_type_out <= `NOPInstType;
+                            imm <= `ZeroWord;
+                            csr_addr <= inst_in[31:20];
+                        end
+                    endcase
                 end
                 default : begin
                     rs1_read_out <= `ReadDisable;
@@ -284,9 +384,9 @@ module id(
                     rd_addr_out <= `NOPRegAdder;
                     inst_type_out <= `NOPInstType;
                     imm <= `ZeroWord;
-                    imm_val_out <= `ZeroWord;
                     pc_out <= `ZeroWord;
                     is_loading_out <= `NotLoading;
+                    csr_addr <= 12'b0;
                 end
             endcase
             imm_val_out <= imm;

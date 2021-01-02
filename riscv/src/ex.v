@@ -11,6 +11,7 @@ module ex(
     input   wire[`RegBus]       imm_in,
     input   wire[`InstAddrBus]  pc_in,
     input   wire                is_loading_in,
+    input   wire[`CSRAddrBus]   csr_addr_in, 
 
     input   wire[`RegBus ]      rd_val_from_mem,
 
@@ -27,9 +28,13 @@ module ex(
     output  reg                 branch_flag_out,
     output  reg[`InstAddrBus  ]   branch_target_addr_out,
 
-    output  reg                stallreq_from_ex,
+    output  reg                 stallreq_from_ex,
 
-    output  reg                ex_is_loading_out
+    output  reg                 ex_is_loading_out,
+
+    input   wire[`RegBus]       csr_val_in,
+    output  reg[`CSRAddrBus]    csr_addr_out, 
+    output  reg[`RegBus]        source_val
 );
 
     always @ (*) begin
@@ -46,6 +51,8 @@ module ex(
             branch_target_addr_out <= `ZeroWord ;
             ex_is_loading_out <= 1'b0;
             stallreq_from_ex <= `NotStop ;
+            csr_addr_out <= 12'b0;
+            source_val <= `ZeroWord;
         end else begin
             ex_is_loading_out <= is_loading_in;
             rd_out <= rd_in;
@@ -59,6 +66,8 @@ module ex(
             branch_flag_out <= `NotBranch ;
             branch_target_addr_out <= `ZeroWord ;
             stallreq_from_ex <= `NotStop ;
+            csr_addr_out <= 12'b0;
+            source_val <= `ZeroWord;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin
@@ -214,6 +223,36 @@ module ex(
                     store_out <= `WriteEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                     mem_val_out <= rs2_val_in;
+                end
+                `CSRRW: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= rs1_val_in;
+                    rd_val_out <= csr_val_in;
+                end
+                `CSRRS: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= rs1_val_in;
+                    rd_val_out <= csr_val_in;
+                end
+                `CSRRC: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= rs1_val_in;
+                    rd_val_out <= csr_val_in;
+                end
+                `CSRRWI: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= imm_in;
+                    rd_val_out <= csr_val_in;
+                end
+                `CSRRSI: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= imm_in;
+                    rd_val_out <= csr_val_in;
+                end
+                `CSRRCI: begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= imm_in;
+                    rd_val_out <= csr_val_in;
                 end
                 default : begin
                     rd_out <= `WriteDisable;

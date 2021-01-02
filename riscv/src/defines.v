@@ -30,6 +30,10 @@
 `define RegNumLog2      5
 `define NOPRegAdder     5'b00000
 
+//-------------CSR Related----------------
+`define CSRAddrBus      11:0
+`define CSRRange        31:20
+
 //----------opCode----------
 `define opCodeRange     6:0
 `define opCodeWidth     7
@@ -42,6 +46,7 @@
 `define opStore         7'b0100011
 `define opRI            7'b0010011
 `define opRR            7'b0110011
+`define opCSR           7'b1110011
 
 //----------Funct3-----------
 `define func3Range      14:12
@@ -76,6 +81,13 @@
 `define f3SRL_SRA       3'b101
 `define f3OR            3'b110
 `define f3AND           3'b111
+`define f3MRET          3'b000
+`define f3CSRRW         3'b001
+`define f3CSRRS         3'b010
+`define f3CSRRC         3'b011
+`define f3CSRRWI        3'b101
+`define f3CSRRSI        3'b110
+`define f3CSRRCI        3'b111
 
 //----------Funct7----------
 `define func7Range      31:25
@@ -86,6 +98,7 @@
 `define f7SUB           7'b0100000
 `define f7SRL           7'b0000000
 `define f7SRA           7'b0100000
+`define f7MRET          7'b0011000
 
 //----------Reg_Pos_In_Inst----------
 `define rs1Range        19:15
@@ -136,6 +149,13 @@
 `define SRA             6'b100011
 `define OR              6'b100100
 `define AND             6'b100101
+`define MRET            6'b100110
+`define CSRRW           6'b100111
+`define CSRRS           6'b101000
+`define CSRRC           6'b101001
+`define CSRRWI          6'b101010
+`define CSRRSI          6'b101011 
+`define CSRRCI          6'b101100
 
 //----------ROM Related----------
 `define InstAddrBus     31:0

@@ -8,6 +8,8 @@ module riscv_top
 (
 	input wire 			EXCLK,
 	input wire			btnC,
+	input wire 			btnU,
+	input wire 			resetInterrupt,
 	output wire 		Tx,
 	input wire 			Rx,
 	output wire		led
@@ -24,13 +26,13 @@ wire clk;
 wire locked;
 
 // assign EXCLK (or your own clock module) to clk
-assign clk = EXCLK;
-//clk_wiz_0 NEW_CLOCK(
-//    .reset(btnC),
-//    .clk_in1(EXCLK),
-//    .clk_out1(clk),
-//    .locked(locekd)
-//);
+// assign clk = EXCLK;
+clk_wiz_0 NEW_CLOCK(
+   .reset(btnC),
+   .clk_in1(EXCLK),
+   .clk_out1(clk),
+   .locked(locekd)
+);
 
 
 always @(posedge clk or posedge btnC)
@@ -84,7 +86,16 @@ wire		cpu_rdy;
 
 wire [31:0] cpu_dbgreg_dout;
 
-wire timer_interrupt;
+reg timer_interrupt;
+
+always @ (posedge btnU or posedge resetInterrupt) begin
+	if(btnU) begin
+		timer_interrupt <= 1;
+	end else if (resetInterrupt) begin
+		timer_interrupt <= 0;
+	end
+end
+
 // fakecpu cpu0(
 cpu cpu0(
 	.clk_in(clk),
@@ -106,16 +117,16 @@ wire [7:0] timer_cmp_dout;
 
 assign timer_en = (cpumc_a[RAM_ADDR_WIDTH : RAM_ADDR_WIDTH-2] == 3'b101) ? 1'b1 : 1'b0;
 
-timer timer0(
-    .clk(clk),
-    .rst(rst),
-    .en_in(timer_en),
-    .r_nw_in(~cpumc_wr),
-    .a_in(ram_a),
-	.d_in(cpumc_din),    
-    .timer_interrupt(timer_interrupt),
-    .timer_cmp_dout(timer_cmp_dout)
-);
+// timer timer0(
+//     .clk(clk),
+//     .rst(rst),
+//     .en_in(timer_en),
+//     .r_nw_in(~cpumc_wr),
+//     .a_in(ram_a),
+// 	.d_in(cpumc_din),    
+//     .timer_interrupt(timer_interrupt),
+//     .timer_cmp_dout(timer_cmp_dout)
+// );
 
 //
 // HCI: host communication interface block. Use controller to interact.

@@ -36,13 +36,19 @@ module CSR (
     input   wire                rst_in,
     input   wire                rdy_in,
 
+    input   wire[`InstAddrBus]  next_pc_in,
     input   wire[`RegBus]       source_val,
     input   wire                rd_enable,
     input   wire[`CSRAddrBus]   csr_addr_in,
-    input   wire                inst_type_in,
+    input   wire[`InstTypeBus]  inst_type_in,
+    input   wire                is_mret,
 
     output  reg[`RegBus]        csr_val_out,
 
+    input   wire                timer_interrupt,
+    output  reg                 interrupt,
+    
+    output  reg[`InstAddrBus]   to_pc
 );
 
 reg[`RegBus]    csr_regs[`CSRNum - 1 : 0];
@@ -322,6 +328,31 @@ always @ (*) begin
     end
 end
 
+reg[`RegBus]   mip;
+reg[`RegBus]   mcause;
+reg[`RegBus]   mepc;
+reg[`RegBus]   mstatus;
+always @ (*) begin
+    if (rst_in == `RstDisable) begin
+        interrupt   <= timer_interrupt & !csr_regs[`Mip][7];
+        mip <= {csr_regs[`Mip][31:8],timer_interrupt,csr_regs[`Mip][6:0]};
+    end
+end
+
+always @ (*) begin
+    if ((rst_in == `RstDisable) && interrupt) begin
+        mcause <= {1'b1,31'h7};
+        mepc   <= next_pc_in;
+        mstatus<= {csr_regs[`Mstatus][31:8],csr_regs[`Mstatus][3],csr_regs[`Mstatus][6:4],1'b0,csr_regs[`Mstatus][2:0]};
+        case(csr_regs[`Mtvec][0])
+            1'b0:   to_pc <= {csr_regs[`Mtvec][31:2], 2'b00};
+            default:to_pc <= {csr_regs[`Mtvec][31:2], 2'b00} + 32'hc0;
+        endcase
+    end else if (is_mret) begin
+        mstatus<= {csr_regs[`Mstatus][31:8],1'b1,csr_regs[`Mstatus][6:4],csr_regs[`Mstatus][7],csr_regs[`Mstatus][2:0]};
+    end
+end
+
 always @ (posedge clk_in) begin
     if (rst_in == `RstDisable) begin
         if (rdy == 1'b1) begin
@@ -356,6 +387,10 @@ always @ (posedge clk_in) begin
                 endcase
             end
         end
+        csr_regs[`Mip]    <= mip;
+        csr_regs[`Mcause] <= mcause;
+        csr_regs[`Mepc]   <= mepc;
+        csr_regs[`Mstatus]<= mstatus;
     end
 end
     

@@ -145,6 +145,15 @@ module cpu(
     wire stallreq_from_ex;
     wire[5:0] stall_info;
 
+    
+    wire[`RegBus]           source_val_ex_to_csr;
+    wire[`CSRAddrBus]       csr_addr_ex_to_csr;
+    wire                    is_mret;
+    wire[`RegBus]           csr_val_csr_to_ex;
+    wire                    timer_interrupt_timer_to_csr;
+    wire                    interrupt;
+    wire[`InstAddrBus]      to_pc;
+
     pc_reg PC(
         .clk_in(clk_in),
         .rst_in(rst_in),
@@ -152,7 +161,9 @@ module cpu(
         .pc_out(pc),
         .stall(stall_info),
         .branch_flag_in(branch_flag_ex_out),
-        .branch_target_addr_in(branch_target_addr_ex_out)
+        .branch_target_addr_in(branch_target_addr_ex_out),
+        .timer_interrupt(interrupt),
+        .to_pc(to_pc)
     );
 
     If IF(
@@ -181,8 +192,11 @@ module cpu(
         .if_inst(inst_if_to_ifid),
         .id_pc(pc_ifid_to_id),
         .id_inst(inst_ifid_to_id),
-        .stall(stall_info)
+        .stall(stall_info),
+        .timer_interrupt(interrupt)
     );
+
+    wire[`CSRAddrBus] csr_addr_id_to_idex;
 
     id ID(
         .rst_in(rst_in),
@@ -209,9 +223,11 @@ module cpu(
         .imm_val_out(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
         .stalleq_from_id(stallreq_from_id),
-        .is_loading_out(loading_id_to_idex)
+        .is_loading_out(loading_id_to_idex),
+        .csr_addr(csr_addr_id_to_idex)
     );
 
+    wire[`CSRAddrBus]   csr_addr_idex_to_ex;
     id_ex ID_EX(
         .clk_in(clk_in),
         .rst_in(rst_in),
@@ -233,7 +249,10 @@ module cpu(
         .pc_ex_out(pc_idex_to_ex),
         .stall(stall_info),
         .id_loading(loading_id_to_idex),
-        .ex_loading(loading_idex_to_ex)
+        .ex_loading(loading_idex_to_ex),
+        .csr_addr_in(csr_addr_id_to_idex),
+        .csr_addr_out(csr_addr_idex_to_ex),
+        .timer_interrupt(interrupt)
     );
 
     ex EX(
@@ -258,7 +277,11 @@ module cpu(
         .stallreq_from_ex(stallreq_from_ex),
         .branch_flag_out(branch_flag_ex_out),
         .branch_target_addr_out(branch_target_addr_ex_out),
-        .rd_val_from_mem(rd_val_mem_to_memwb)
+        .rd_val_from_mem(rd_val_mem_to_memwb),
+        .csr_val_in(csr_val_csr_to_ex),
+        .csr_addr_out(csr_addr_ex_to_csr),
+        .source_val(source_val_ex_to_csr),
+        .is_mret(is_mret)
     );
 
     ex_mem EX_MEM(
@@ -365,6 +388,28 @@ module cpu(
         .mem_val_out(mem_dout),
         .mem_val_read_in(mem_din),
         .busy(busy_memctrl_to_if_and_mem)
+    );
+
+    csr CSR(
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .rdy_in(rdy_in),
+        .next_pc_in(branch_target_addr_ex_out),
+        .source_val(source_val_ex_to_csr),
+        .rd_enable(rd_ex_to_exmem),
+        .csr_addr_in(csr_addr_ex_to_csr),
+        .inst_type_in(inst_type_ex_to_exmem),
+        .is_mret(is_mret),
+        .csr_val_out(csr_val_csr_to_ex),
+        .timer_interrupt(timer_interrupt_timer_to_csr),
+        .interrupt(interrupt),
+        .to_pc(to_pc)
+    );
+
+    timer TIMER(
+        .clk(clk_in),
+        .rst(rst_in),
+        .timer_interrupt(timer_interrupt_timer_to_csr)
     );
 
 /*

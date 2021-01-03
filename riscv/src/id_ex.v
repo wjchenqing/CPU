@@ -7,6 +7,7 @@ module id_ex(
     input   wire[5:0]       stall,
 
     input   wire            branch_flag_in,
+    input   wire            timer_interrupt,
 
     //form id
     input   wire[`RegBus]       rs1_val_id_in,
@@ -43,6 +44,16 @@ module id_ex(
             csr_addr_out <= 12'b0;
         end else if (rdy_in == 1'b1) begin
             if (stall[2] == `Stop && stall[3] == `NotStop ) begin
+                rs1_val_ex_out <= `ZeroWord ;
+                rs2_val_ex_out <= `ZeroWord ;
+                rd_ex_out <= `WriteDisable ;
+                rd_addr_ex_out <= `NOPRegAdder ;
+                inst_type_ex_out <= `NOPInstType ;
+                imm_ex_out <= `ZeroWord ;
+                pc_ex_out <= `ZeroWord ;
+                ex_loading <= `False_v ;
+                csr_addr_out <= 12'b0;
+            end else if (timer_interrupt == 1'b1) begin
                 rs1_val_ex_out <= `ZeroWord ;
                 rs2_val_ex_out <= `ZeroWord ;
                 rd_ex_out <= `WriteDisable ;

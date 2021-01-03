@@ -309,6 +309,7 @@ module id(
                             rd_out <= `WriteEnable;
                             rd_addr_out <= `NOPRegAdder;
                             imm <= `ZeroWord;
+                            csr_addr <= 12'h341;
                         end
                         `f3CSRRW: begin
                             rs1_read_out <= `ReadEnable;

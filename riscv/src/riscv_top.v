@@ -10,7 +10,7 @@ module riscv_top
 	input wire			btnC,
 	output wire 		Tx,
 	input wire 			Rx,
-	output wire			led
+	output wire		led
 );
 
 localparam SYS_CLK_FREQ = 100000000;
@@ -21,9 +21,17 @@ reg rst;
 reg rst_delay;
 
 wire clk;
+wire locked;
 
 // assign EXCLK (or your own clock module) to clk
-assign clk = EXCLK;
+//assign clk = EXCLK;
+clk_wiz_0 NEW_CLOCK(
+    .reset(btnC),
+    .clk_in1(EXCLK),
+    .clk_out1(clk),
+    .locked(locekd)
+);
+
 
 always @(posedge clk or posedge btnC)
 begin
@@ -76,6 +84,36 @@ wire		cpu_rdy;
 
 wire [31:0] cpu_dbgreg_dout;
 
+// fakecpu cpu0(
+cpu cpu0(
+	.clk_in(clk),
+	.rst_in(rst),
+	.rdy_in(cpu_rdy),
+
+	.mem_din(cpu_ram_din),
+	.mem_dout(cpu_ram_dout),
+	.mem_a(cpu_ram_a),
+	.mem_wr(cpu_ram_wr),
+
+	.dbgreg_dout(cpu_dbgreg_dout)	// demo
+);
+
+wire timer_interrupt;
+wire timer_en;
+wire [7:0] timer_cmp_dout;
+
+assign timer_en = (cpumc_a[RAM_ADDR_WIDTH : RAM_ADDR_WIDTH-2] == 3'b101) ? 1'b1 : 1'b0;
+
+timer timer0(
+    .clk(clk),
+    .rst(rst),
+    .en_in(timer_en),
+    .r_nw_in(~cpumc_wr),
+    .a_in(ram_a),
+	.d_in(cpumc_din),    
+    .timer_interrupt(timer_interrupt),
+    .timer_cmp_dout(timer_cmp_dout)
+);
 
 //
 // HCI: host communication interface block. Use controller to interact.
@@ -91,24 +129,6 @@ wire [ 2:0]					hci_io_sel;
 wire [ 7:0]					hci_io_din;
 wire [ 7:0]					hci_io_dout;
 wire 						hci_io_wr;
-wire 						hci_io_full;
-
-reg                         q_hci_io_en;
-
-cpu cpu0(
-	.clk_in(clk),
-	.rst_in(rst),
-	.rdy_in(cpu_rdy),
-
-	.mem_din(cpu_ram_din),
-	.mem_dout(cpu_ram_dout),
-	.mem_a(cpu_ram_a),
-	.mem_wr(cpu_ram_wr),
-	
-	.io_buffer_full(hci_io_full),
-
-	.dbgreg_dout(cpu_dbgreg_dout)
-);
 
 hci #(.SYS_CLK_FREQ(SYS_CLK_FREQ),
 	.RAM_ADDR_WIDTH(RAM_ADDR_WIDTH),
@@ -128,7 +148,6 @@ hci #(.SYS_CLK_FREQ(SYS_CLK_FREQ),
 	.io_din(hci_io_din),
 	.io_dout(hci_io_dout),
 	.io_wr(hci_io_wr),
-	.io_full(hci_io_full),
 
 	.cpu_dbgreg_din(cpu_dbgreg_dout)	// demo
 );
@@ -153,13 +172,9 @@ assign cpumc_a      = (hci_active) ? hci_ram_a		 : cpu_ram_a;
 assign cpumc_wr		= (hci_active) ? hci_ram_wr      : cpu_ram_wr;
 assign cpumc_din    = (hci_active) ? hci_ram_dout    : cpu_ram_dout;
 
-// Fixed 2020-10-06: Inconsisitency of return value with I/O state
-always @ (posedge clk) begin
-    q_hci_io_en <= hci_io_en;
-end
-
-assign cpu_ram_din 	= (q_hci_io_en)  ? hci_io_dout 	 : ram_dout;
-
+wire [7:0] perip_dout; 
+assign perip_dout = (timer_en)? timer_cmp_dout : hci_io_dout;
+assign cpu_ram_din 	= (hci_io_en|| timer_en)? perip_dout : ram_dout;
 assign hci_ram_din 	= ram_dout;
 
 endmodule

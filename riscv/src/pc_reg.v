@@ -6,7 +6,10 @@ module pc_reg(
     input   wire        rdy_in,
     input   wire[5:0]   stall,
 
-    input   wire                branch_flag_in,
+    input   wire                  timer_interrupt,
+    input   wire                  to_pc,
+
+    input   wire                  branch_flag_in,
     input   wire[`InstAddrBus ]   branch_target_addr_in,
 
     output  reg[`InstAddrBus]   pc_out
@@ -15,6 +18,8 @@ module pc_reg(
     always @ (posedge clk_in) begin
         if (rst_in == `RstEnable) begin
             pc_out <= `ZeroWord;
+        end else if (timer_interrupt == 1'b1 ) begin
+            pc_out <= to_pc;
         end else if (branch_flag_in == `Branch ) begin
             pc_out <= branch_target_addr_in;
         end else if (stall[0] == `NotStop) begin

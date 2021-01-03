@@ -7,6 +7,7 @@ module if_id(
     input   wire[5:0]   stall,
 
     input   wire        branch_flag_in,
+    input   wire        timer_interrupt,
 
     input   wire[`InstAddrBus]  if_pc,
     input   wire[`InstBus]      if_inst,
@@ -21,6 +22,9 @@ module if_id(
             id_inst <= `ZeroWord;
         end else if (rdy_in == 1'b1) begin
             if (stall[1] == `Stop && stall[2] == `NotStop ) begin
+                id_pc <= `ZeroWord ;
+                id_inst <= `ZeroWord ;
+            end else if (timer_interrupt == 1'b1) begin
                 id_pc <= `ZeroWord ;
                 id_inst <= `ZeroWord ;
             end else if (stall[1] == `Stop) begin

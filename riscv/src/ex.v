@@ -34,7 +34,8 @@ module ex(
 
     input   wire[`RegBus]       csr_val_in,
     output  reg[`CSRAddrBus]    csr_addr_out, 
-    output  reg[`RegBus]        source_val
+    output  reg[`RegBus]        source_val,
+    output  reg                 is_mret
 );
 
     always @ (*) begin
@@ -53,6 +54,7 @@ module ex(
             stallreq_from_ex <= `NotStop ;
             csr_addr_out <= 12'b0;
             source_val <= `ZeroWord;
+            is_mret <= 1'b0;
         end else begin
             ex_is_loading_out <= is_loading_in;
             rd_out <= rd_in;
@@ -64,10 +66,11 @@ module ex(
             mem_addr_out <= `ZeroWord ;
             mem_val_out <= `ZeroWord ;
             branch_flag_out <= `NotBranch ;
-            branch_target_addr_out <= `ZeroWord ;
+            branch_target_addr_out <= pc_in + `PCstep ;
             stallreq_from_ex <= `NotStop ;
             csr_addr_out <= 12'b0;
             source_val <= `ZeroWord;
+            is_mret <= 1'b0;
             case (inst_type_in)
                 `ADDI: rd_val_out <= imm_in + rs1_val_in;
                 `SLTI: begin
@@ -131,7 +134,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `BNE: begin
@@ -141,7 +144,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `BLT: begin
@@ -151,7 +154,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `BGE: begin
@@ -161,7 +164,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `BLTU: begin
@@ -171,7 +174,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `BGEU: begin
@@ -181,7 +184,7 @@ module ex(
                         branch_target_addr_out <= pc_in + imm_in;
                     end else begin
                         branch_flag_out <= `NotBranch ;
-                        branch_target_addr_out <= `ZeroWord ;
+                        branch_target_addr_out <= pc_in + `PCstep ;
                     end
                 end
                 `LB: begin
@@ -223,6 +226,13 @@ module ex(
                     store_out <= `WriteEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                     mem_val_out <= rs2_val_in;
+                end
+                `MRET : begin
+                    csr_addr_out <= csr_addr_in;
+                    source_val <= rs1_val_in;
+                    branch_flag_out <= `Branch ;
+                    branch_target_addr_out <= csr_val_in;
+                    is_mret <= `True_v;
                 end
                 `CSRRW: begin
                     csr_addr_out <= csr_addr_in;

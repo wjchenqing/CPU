@@ -1,5 +1,6 @@
 // RISCV32I CPU top module
 // port modification allowed for debugging purposes
+`include "defines.v"
 
 module cpu(
     input  wire                 clk_in,			// system clock signal
@@ -12,6 +13,7 @@ module cpu(
     output wire                 mem_wr,			// write/read signal (1 for write)
 	
 	input  wire                 io_buffer_full, // 1 if uart buffer is full
+    input  wire                 timer_interrupt,
 	
 	output wire [31:0]			dbgreg_dout		// cpu register output (debugging demo)
 );
@@ -29,7 +31,7 @@ module cpu(
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
     wire rdy;
-    assign rdy = rdy_in & (!io_buffer_full);
+    assign rdy = rdy_in ;//& (!io_buffer_full);
 
     // Link pc_reg to if.
     wire [`InstAddrBus] pc;
@@ -401,16 +403,16 @@ module cpu(
         .inst_type_in(inst_type_ex_to_exmem),
         .is_mret(is_mret),
         .csr_val_out(csr_val_csr_to_ex),
-        .timer_interrupt(timer_interrupt_timer_to_csr),
+        .timer_interrupt(timer_interrupt),
         .interrupt(interrupt),
         .to_pc(to_pc)
     );
 
-    timer TIMER(
-        .clk(clk_in),
-        .rst(rst_in),
-        .timer_interrupt(timer_interrupt_timer_to_csr)
-    );
+    // timer TIMER(
+    //     .clk(clk_in),
+    //     .rst(rst_in),
+    //     .timer_interrupt(timer_interrupt_timer_to_csr)
+    // );
 
 /*
 always @(posedge clk_in)

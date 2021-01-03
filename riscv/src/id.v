@@ -61,7 +61,7 @@ module id(
             imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
             is_loading_out <= `NotLoading;
-            csr_addr <= `12'b0;
+            csr_addr <= `NopCSR;
         end else begin
             inst_type_out <= `NOPInstType;
             case (opcode)
@@ -74,7 +74,7 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
                     case (func3)
                         `f3ADDI: begin
                             inst_type_out <= `ADDI;
@@ -129,7 +129,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= `ZeroWord;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
 
                     case (func3)
                         `f3ADD_SUB: begin
@@ -179,7 +179,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
 
                     case (func3)
                         `f3BEQ: begin
@@ -200,7 +200,7 @@ module id(
                         `f3BGEU: begin
                             inst_type_out <= `BGEU;
                         end
-                        `default: begin
+                        default: begin
                             inst_type_out <= `NOPInstType;
                         end
                     endcase
@@ -215,7 +215,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     is_loading_out <= `Loading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
 
                     case (func3)
                         `f3LB: inst_type_out <= `LB;
@@ -236,7 +236,7 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
 
                     case (func3)
                         `f3SB: inst_type_out <= `SB;
@@ -256,7 +256,7 @@ module id(
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `LUI;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
                 end
                 `opAUIPC: begin
                     rs1_read_out <= `ReadDisable;
@@ -269,7 +269,7 @@ module id(
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `AUIPC;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
                 end
                 `opJAL: begin
                     rs1_read_out <= `ReadDisable;
@@ -282,7 +282,7 @@ module id(
                     imm <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
                     inst_type_out <= `JAL;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
                 end
                 `opJALR: begin
                     rs1_read_out <= `ReadEnable;
@@ -295,7 +295,7 @@ module id(
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
                     is_loading_out <= `NotLoading ;
-                    csr_addr <= `12'b0;
+                    csr_addr <= `NopCSR;
                 end
                 `opCSR: begin
                     rs2_read_out <= `ReadDisable;

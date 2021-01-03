@@ -24,13 +24,13 @@ wire clk;
 wire locked;
 
 // assign EXCLK (or your own clock module) to clk
-//assign clk = EXCLK;
-clk_wiz_0 NEW_CLOCK(
-    .reset(btnC),
-    .clk_in1(EXCLK),
-    .clk_out1(clk),
-    .locked(locekd)
-);
+assign clk = EXCLK;
+//clk_wiz_0 NEW_CLOCK(
+//    .reset(btnC),
+//    .clk_in1(EXCLK),
+//    .clk_out1(clk),
+//    .locked(locekd)
+//);
 
 
 always @(posedge clk or posedge btnC)
@@ -84,6 +84,7 @@ wire		cpu_rdy;
 
 wire [31:0] cpu_dbgreg_dout;
 
+wire timer_interrupt;
 // fakecpu cpu0(
 cpu cpu0(
 	.clk_in(clk),
@@ -94,11 +95,12 @@ cpu cpu0(
 	.mem_dout(cpu_ram_dout),
 	.mem_a(cpu_ram_a),
 	.mem_wr(cpu_ram_wr),
+	.timer_interrupt(timer_interrupt),
 
 	.dbgreg_dout(cpu_dbgreg_dout)	// demo
 );
 
-wire timer_interrupt;
+
 wire timer_en;
 wire [7:0] timer_cmp_dout;
 

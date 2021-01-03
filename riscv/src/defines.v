@@ -167,4 +167,33 @@
 `define TagBus          8:0
 `define TagRange        17:9
 
-
+`define RstEnable       1'b1
+`define CSRNum          256
+`define NopCSR          8'hff
+`define Mvendorid       8'h00
+`define Marchid         8'h01
+`define Mimpid          8'h02
+`define Mhartid         8'h03
+`define Mstatus         8'h04
+`define Misa            8'h05
+`define Medeleg         8'h06
+`define Mideleg         8'h07
+`define Mie             8'h08
+`define Mtvec           8'h09
+`define Mcounteren      8'h0a
+`define Mscratch        8'h0b
+`define Mepc            8'h0c
+`define Mcause          8'h0d
+`define Mtval           8'h0e
+`define Mip             8'h0f
+`define Pmpcfg          8'h10
+`define Pmpaddr         8'h14
+`define Mcycle          8'h24
+`define Minstret        8'h25
+`define Mhpmcounter     8'h26
+`define Mcycleh         8'h43
+`define Minstreth       8'h44
+`define Mhpmcounterh    8'h45
+`define Mhpmevent       8'h62
+`define Tselect         8'h7f
+`define Tdata           8'h80

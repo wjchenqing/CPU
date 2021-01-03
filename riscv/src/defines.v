@@ -144,17 +144,17 @@
 //---------ICACHE-------------
 `define ICacheNum       256
 `define CacheAddrRange  9:2
-`define TagBus          7:0
+`define TagBus          6:0
 `define TagRange        16:10
 
 //------------BTB------------
 `define BTBNum          32
 `define BTBAddrRange    6:2
-`define BTBTagBus       10:0
+`define BTBTagBus       9:0
 `define BTBTagRange     16:7
 
 //----------DCACHE------------
 `define DCacheNum       256
 `define DCacheAddrRange 9:2
-`define DTagBus        7:0
-`define DTagRange       16:10
+`define DTagBus         7:0
+`define DTagRange       17:10

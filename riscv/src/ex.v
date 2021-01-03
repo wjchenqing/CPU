@@ -10,11 +10,8 @@ module ex(
     input   wire[`InstTypeBus]  inst_type_in,
     input   wire[`RegBus]       imm_in,
     input   wire[`InstAddrBus]  pc_in,
-    input   wire                is_loading_in,
 
     input   wire                pre_to_take,
-
-    input   wire[`RegBus ]      rd_val_from_mem,
 
     output  reg                 rd_out,
     output  reg[`RegBus]        rd_val_out,
@@ -53,8 +50,9 @@ module ex(
             stallreq_from_ex <= `NotStop ;
             branch_pc_out <= `ZeroWord ;
             branch_taken <= `False_v;
+            is_jalr <= `False_v;
         end else begin
-            ex_is_loading_out <= is_loading_in;
+            ex_is_loading_out <= 1'b0;
             rd_out <= rd_in;
             rd_val_out <= `ZeroWord;
             rd_addr_out <= rd_addr_in;
@@ -301,27 +299,37 @@ module ex(
                     end
                 end
                 `LB: begin
-                    rd_val_out <= rd_val_from_mem;
+                    //rd_val_out <= rd_val_from_mem;
+                    rd_val_out <= `ZeroWord;
+                    ex_is_loading_out <= 1'b1;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LH: begin
-                    rd_val_out <= rd_val_from_mem;
+                    //rd_val_out <= rd_val_from_mem;
+                    rd_val_out <= `ZeroWord;
+                    ex_is_loading_out <= 1'b1;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LW: begin
-                    rd_val_out <= rd_val_from_mem;
+                    //rd_val_out <= rd_val_from_mem;
+                    rd_val_out <= `ZeroWord;
+                    ex_is_loading_out <= 1'b1;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LBU: begin
-                    rd_val_out <= rd_val_from_mem;
+                    //rd_val_out <= rd_val_from_mem;
+                    rd_val_out <= `ZeroWord;
+                    ex_is_loading_out <= 1'b1;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
                 `LHU: begin
-                    rd_val_out <= rd_val_from_mem;
+                    //rd_val_out <= rd_val_from_mem;
+                    rd_val_out <= `ZeroWord;
+                    ex_is_loading_out <= 1'b1;
                     load_out <= `ReadEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                 end
@@ -339,20 +347,6 @@ module ex(
                     store_out <= `WriteEnable ;
                     mem_addr_out <= rs1_val_in + imm_in;
                     mem_val_out <= rs2_val_in;
-                end
-                default : begin
-                    rd_out <= `WriteDisable;
-                    rd_val_out <= `ZeroWord;
-                    rd_addr_out <= `NOPRegAdder;
-                    inst_type_out <= `NOPInstType;
-                    load_out <= `ReadDisable ;
-                    store_out <= `WriteDisable ;
-                    mem_addr_out <= `ZeroWord;
-                    mem_val_out <= `ZeroWord;
-                    branch_flag_out <= `NotBranch ;
-                    branch_target_addr_out <= `ZeroWord ;
-                    ex_is_loading_out <= 1'b0;
-                    stallreq_from_ex <= `NotStop ;
                 end
             endcase
         end

@@ -35,7 +35,6 @@ module id(
     output  reg[`InstTypeBus]   inst_type_out,
     output  reg[`InstAddrBus]   pc_out,
     output  reg[`RegBus]        imm_val_out,
-    output  reg                 is_loading_out,
     output  reg                 pre_to_take_out,
 
     //stall ctrl
@@ -61,7 +60,6 @@ module id(
             imm <= `ZeroWord;
             imm_val_out <= `ZeroWord;
             pc_out <= `ZeroWord;
-            is_loading_out <= `NotLoading;
             pre_to_take_out <= `False_v;
         end else begin
             inst_type_out <= `NOPInstType;
@@ -75,7 +73,6 @@ module id(
                     rd_out <= `WriteEnable;
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
-                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3ADDI: begin
@@ -126,7 +123,6 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     imm <= `ZeroWord;
-                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3ADD_SUB: begin
@@ -172,7 +168,6 @@ module id(
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
-                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3BEQ: begin
@@ -204,7 +199,6 @@ module id(
                     rd_addr_out <= inst_in[`rdRange];
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
-                    is_loading_out <= `Loading ;
 
                     case (func3)
                         `f3LB: inst_type_out <= `LB;
@@ -223,7 +217,6 @@ module id(
                     rd_addr_out <= `NOPRegAdder;
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:25],inst_in[11:7]};
-                    is_loading_out <= `NotLoading ;
 
                     case (func3)
                         `f3SB: inst_type_out <= `SB;
@@ -241,7 +234,6 @@ module id(
                     pc_out <= pc_in;
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `LUI;
-                    is_loading_out <= `NotLoading ;
                 end
                 `opAUIPC: begin
                     rs1_read_out <= `ReadDisable;
@@ -253,7 +245,6 @@ module id(
                     pc_out <= pc_in;
                     imm <= {inst_in[31:12],12'b0};
                     inst_type_out <= `AUIPC;
-                    is_loading_out <= `NotLoading ;
                 end
                 `opJAL: begin
                     rs1_read_out <= `ReadDisable;
@@ -265,7 +256,6 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:21],1'b0};
                     inst_type_out <= `JAL;
-                    is_loading_out <= `NotLoading ;
                 end
                 `opJALR: begin
                     rs1_read_out <= `ReadEnable;
@@ -277,7 +267,6 @@ module id(
                     pc_out <= pc_in;
                     imm <= {{20{inst_in[31]}},inst_in[31:20]};
                     inst_type_out <= `JALR;
-                    is_loading_out <= `NotLoading ;
                 end
                 default : begin
                     rs1_read_out <= `ReadDisable;
@@ -290,7 +279,6 @@ module id(
                     imm <= `ZeroWord;
                     imm_val_out <= `ZeroWord;
                     pc_out <= `ZeroWord;
-                    is_loading_out <= `NotLoading;
                 end
             endcase
             imm_val_out <= imm;

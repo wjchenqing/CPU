@@ -53,8 +53,16 @@ module mem(
     reg                 cache_done;
     reg                 cache_changed;
 
+    wire [7:0]          cache_index;
+    assign cache_index = mem_addr_in[`DCacheAddrRange];
+    wire [`DTagBus]     addr_tag;
+    assign addr_tag = mem_addr_in[`DTagRange];
+    wire [`DTagBus]     cache_tag_indexed;
+    assign cache_tag_indexed = cache_tag[cache_index];
+    wire                valid;
+    assign valid = cache_valid[cache_index];
     wire [`RegBus]      val;
-    assign val = cache_data[mem_addr_in[`DCacheAddrRange]];
+    assign val = cache_data[cache_index];
 
     always @ (*) begin
         if (rst_in == `RstEnable) begin
@@ -69,23 +77,23 @@ module mem(
             cache_addr <= `ZeroWord;
             cache_val <= `ZeroWord;
         end else if (load_in == `True_v) begin
-            if (cache_valid[mem_addr_in[`DCacheAddrRange]] && cache_tag[mem_addr_in[`DCacheAddrRange]] == mem_addr_in[`DTagRange]) begin
+            if (valid && cache_tag_indexed == addr_tag) begin
                 cache_done <= `True_v;
                 cache_changed <= `False_v;
                 cache_addr <= mem_addr_in;
-                //cache_val <= cache_data[mem_addr_in[`DCacheAddrRange]];
+                cache_val <= `ZeroWord;
                 case (inst_type_in)
                     `LW : cache_val <= val;
                     `LH : begin
                         case (mem_addr_in[1:0])
                             2'b00:   cache_val <= {16'b0,val[15:0]};
-                            default: cache_val <= {16'b0,val[31:16]};
+                            2'b10:   cache_val <= {16'b0,val[31:16]};
                         endcase
                     end
                     `LHU: begin
                         case (mem_addr_in[1:0])
                             2'b00:   cache_val <= {16'b0,val[15:0]};
-                            default: cache_val <= {16'b0,val[31:16]};
+                            2'b10:   cache_val <= {16'b0,val[31:16]};
                         endcase
                     end
                     `LB : begin
@@ -93,7 +101,7 @@ module mem(
                             2'b00:   cache_val <= {24'b0,val[7:0]};
                             2'b01:   cache_val <= {24'b0,val[15:8]};
                             2'b10:   cache_val <= {24'b0,val[23:16]};
-                            default: cache_val <= {24'b0,val[31:24]};
+                            2'b11:   cache_val <= {24'b0,val[31:24]};
                         endcase
                     end
                     `LBU: begin
@@ -101,7 +109,7 @@ module mem(
                             2'b00:   cache_val <= {24'b0,val[7:0]};
                             2'b01:   cache_val <= {24'b0,val[15:8]};
                             2'b10:   cache_val <= {24'b0,val[23:16]};
-                            default: cache_val <= {24'b0,val[31:24]};
+                            2'b11:   cache_val <= {24'b0,val[31:24]};
                         endcase
                     end
                 endcase

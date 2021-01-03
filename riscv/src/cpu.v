@@ -95,7 +95,6 @@ module cpu(
     wire [`InstTypeBus] inst_type_id_to_idex;
     wire [`RegBus ]     imm_id_to_idex;
     wire [`InstAddrBus] pc_id_to_idex;
-    wire                loading_id_to_idex;
     wire                pre_to_take_id_to_idex;
 
     // Link id_ex to ex.
@@ -106,7 +105,6 @@ module cpu(
     wire [`InstTypeBus ]    inst_type_idex_to_ex;
     wire [`RegBus ]         imm_idex_to_ex;
     wire [`InstAddrBus ]    pc_idex_to_ex;
-    wire                    loading_idex_to_ex;
     wire                    pre_to_take_idex_to_ex;
 
     // Link ex to ex_mem, forwarding to id
@@ -239,7 +237,6 @@ module cpu(
         .imm_val_out(imm_id_to_idex),
         .pc_out(pc_id_to_idex),
         .stalleq_from_id(stallreq_from_id),
-        .is_loading_out(loading_id_to_idex),
         .pre_to_take_in(pre_to_take_ifid_to_id),
         .pre_to_take_out(pre_to_take_id_to_idex)
     );
@@ -264,8 +261,6 @@ module cpu(
         .imm_ex_out(imm_idex_to_ex),
         .pc_ex_out(pc_idex_to_ex),
         .stall(stall_info),
-        .id_loading(loading_id_to_idex),
-        .ex_loading(loading_idex_to_ex),
         .pre_to_take_in(pre_to_take_id_to_idex),
         .pre_to_take_out(pre_to_take_idex_to_ex)
     );
@@ -279,7 +274,6 @@ module cpu(
         .inst_type_in(inst_type_idex_to_ex),
         .imm_in(imm_idex_to_ex),
         .pc_in(pc_idex_to_ex),
-        .is_loading_in(loading_idex_to_ex),
         .ex_is_loading_out(ex_is_loading_ex_to_id),
         .rd_out(rd_ex_to_exmem),
         .rd_val_out(rd_val_ex_to_exmem),
@@ -292,7 +286,6 @@ module cpu(
         .stallreq_from_ex(stallreq_from_ex),
         .branch_flag_out(branch_flag_ex_out),
         .branch_target_addr_out(branch_target_addr_ex_out),
-        .rd_val_from_mem(rd_val_mem_to_memwb),
         .branch_pc_out(branch_pc_ex_to_pcreg),
         .pre_to_take(pre_to_take_idex_to_ex),
         .branch_taken(branch_taken_ex_to_pc),

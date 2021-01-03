@@ -9,7 +9,6 @@ module riscv_top
 	input wire 			EXCLK,
 	input wire			btnC,
 	input wire 			btnU,
-	input wire 			resetInterrupt,
 	output wire 		Tx,
 	input wire 			Rx,
 	output wire		led
@@ -87,6 +86,7 @@ wire		cpu_rdy;
 wire [31:0] cpu_dbgreg_dout;
 
 reg timer_interrupt;
+wire resetInterrupt;
 
 always @ (posedge btnU or posedge resetInterrupt) begin
 	if(btnU) begin
@@ -107,6 +107,7 @@ cpu cpu0(
 	.mem_a(cpu_ram_a),
 	.mem_wr(cpu_ram_wr),
 	.timer_interrupt(timer_interrupt),
+	.resetInterrupt(resetInterrupt),
 
 	.dbgreg_dout(cpu_dbgreg_dout)	// demo
 );

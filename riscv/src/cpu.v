@@ -14,6 +14,7 @@ module cpu(
 	
 	input  wire                 io_buffer_full, // 1 if uart buffer is full
     input  wire                 timer_interrupt,
+    output wire                 resetInterrupt,
 	
 	output wire [31:0]			dbgreg_dout		// cpu register output (debugging demo)
 );
@@ -155,6 +156,8 @@ module cpu(
     wire                    timer_interrupt_timer_to_csr;
     wire                    interrupt;
     wire[`InstAddrBus]      to_pc;
+
+    assign resetInterrupt = is_mret;
 
     pc_reg PC(
         .clk_in(clk_in),

@@ -31,18 +31,8 @@ module If(
     reg[`TagBus ]           cache_tag [`ICacheNum - 1 : 0];
     reg[`ICacheNum - 1 : 0] cache_valid;
 
-
-    reg[31:0] i;
-
     reg                 cache_done;
     reg[`InstBus]       cache_inst;
-
-    initial begin
-        for (i = 0; i < `ICacheNum ; i = i+1) begin
-            cache_tag[i] = -1;
-            cache_data[i] = `ZeroWord ;
-        end
-    end
 
     always @ (*) begin
         if (rst_in == `RstEnable ) begin
